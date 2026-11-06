@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { usePos } from '../context/PosContext';
 
 export const BanksView: React.FC = () => {
-  const { banks } = usePos();
-  const [bankList, setBankList] = useState(banks);
+  const { banks, addBank, deleteBank } = usePos();
   const [showAddForm, setShowAddForm] = useState(false);
   const [bankName, setBankName] = useState('');
   const [searchString, setSearchString] = useState('');
@@ -12,22 +11,18 @@ export const BanksView: React.FC = () => {
     e.preventDefault();
     if (!bankName.trim()) return;
 
-    setBankList([
-      ...bankList,
-      {
-        id: bankList.length + 1,
-        bankName: bankName.trim(),
-        accountTitle: bankName.trim(),
-        accountNumber: 'PKR-00' + (bankList.length + 1),
-        balance: 0,
-      },
-    ]);
+    addBank({
+      bankName: bankName.trim(),
+      accountTitle: bankName.trim(),
+      accountNumber: '',
+      balance: 0,
+    });
 
     setBankName('');
     setShowAddForm(false);
   };
 
-  const filtered = bankList.filter((b) =>
+  const filtered = banks.filter((b) =>
     b.bankName.toLowerCase().includes(searchString.toLowerCase())
   );
 
@@ -77,7 +72,6 @@ export const BanksView: React.FC = () => {
         </div>
       )}
 
-      {/* Bank Table matching demo.regalpos.pk/Admin/Viewbank */}
       <div className="table-responsive overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs">
           <thead>
@@ -98,18 +92,8 @@ export const BanksView: React.FC = () => {
                   <div className="btn-group flex justify-center gap-2">
                     <button
                       type="button"
-                      onClick={() => alert(`Edit bank: ${b.bankName}`)}
-                      className="btn btn-link text-info p-0 text-xs font-semibold"
-                      style={{ color: '#17a2b8', textDecoration: 'none' }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
-                        if (confirm(`Delete bank ${b.bankName}?`)) {
-                          setBankList(bankList.filter((x) => x.id !== b.id));
-                        }
+                        if (confirm(`Delete bank ${b.bankName}?`)) deleteBank(b.id);
                       }}
                       className="btn btn-link text-danger p-0 text-xs font-semibold"
                       style={{ color: '#dc3545', textDecoration: 'none' }}

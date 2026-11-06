@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { Product } from '../types';
 
@@ -135,7 +136,7 @@ export const ProductsView: React.FC = () => {
           className="btn"
           style={{ backgroundColor: 'mediumpurple', color: '#fff' }}
         >
-          <i className="fa fa-search mr-1" /> Search
+          <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
         </button>
         <button
           type="button"

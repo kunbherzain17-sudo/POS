@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { Vendor } from '../types';
 
@@ -95,7 +96,7 @@ export const VendorsView: React.FC = () => {
           className="btn btn-primary"
           style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
         >
-          <i className="fa fa-search mr-1" /> Search
+          <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
         </button>
         <select
           id="vendorFilter"

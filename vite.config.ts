@@ -11,14 +11,13 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['assets/*.png', 'assets/*.jpg', 'icon.svg'],
         manifest: {
           id: '/',
           name: 'Regal POS - Retail Management & POS System',
           short_name: 'RegalPOS',
-          description: 'Production-ready Offline Point of Sale and Store ERP software for retail businesses.',
-          theme_color: '#866EC7',
-          background_color: '#2f274a',
+          description: 'Offline-capable point of sale with independent on-device data.',
+          theme_color: '#49386f',
+          background_color: '#49386f',
           display: 'standalone',
           start_url: '/',
           scope: '/',
@@ -44,65 +43,8 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,woff,woff2}'],
-          runtimeCaching: [
-            {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts-cache',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'gstatic-fonts-cache',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/cdnjs\.cloudflare\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'cdnjs-cache',
-                expiration: {
-                  maxEntries: 20,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/stackpath\.bootstrapcdn\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'bootstrap-cache',
-                expiration: {
-                  maxEntries: 20,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-          ],
+          globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,woff,woff2,webmanifest}'],
+          navigateFallback: 'index.html',
         },
         devOptions: {
           enabled: true,

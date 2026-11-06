@@ -1,280 +1,142 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { ArrowRight, Eye, EyeOff, Store } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 
 export const LoginScreen: React.FC = () => {
-  const { login } = usePos();
-  const [role, setRole] = useState<'Admin' | 'cashier' | 'Store Manager'>('Admin');
-  const [username, setUsername] = useState('Admin');
-  const [password, setPassword] = useState('1234');
+  const { login, setupAdministrator, requiresSetup } = usePos();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowWelcome(false);
-    }, 1800);
-    return () => clearTimeout(timer);
-  }, []);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setErrorMsg('');
+    setIsSubmitting(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = login(username, role, password);
-    if (!success) {
-      setErrorMsg('Invalid credentials. Password is 1234.');
+    try {
+      if (requiresSetup) {
+        if (password !== confirmPassword) {
+          setErrorMsg('The passwords do not match.');
+          return;
+        }
+        await setupAdministrator(username, password);
+        return;
+      }
+
+      const success = await login(username, password);
+      if (!success) setErrorMsg('Check your sign-in details and try again.');
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Unable to save the local sign-in settings.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleAdminClick = () => {
-    setRole('Admin');
-    setUsername('Admin');
-    setPassword('1234');
-  };
-
-  const handleCashierClick = () => {
-    setRole('cashier');
-    setUsername('cashier');
-    setPassword('1234');
-  };
-
   return (
-    <div
-      className="min-h-screen w-full flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative font-sans select-none"
-      style={{
-        backgroundImage: "url('/assets/bg-login.jpg')",
-        fontFamily: "'Lato', sans-serif",
-      }}
-    >
-      {/* Background dark overlay like original */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+    <main className="login-page">
+      <section className="login-brand-panel" aria-label="About Regal POS">
+        <a className="login-brand-lockup" href="/" aria-label="Regal home">
+          <span className="login-brand-mark"><Store size={23} aria-hidden="true" /></span>
+          <span>Regal</span>
+        </a>
+        <div className="login-brand-message">
+          <p>Made for the shop floor</p>
+          <h1>Keep the day<br />moving.</h1>
+          <p className="login-brand-description">
+            Ring up sales, keep an eye on stock, and look after the people who keep you in business.
+          </p>
+        </div>
+        <div className="login-capabilities" aria-label="Available tools">
+          <span>Point of sale</span>
+          <span>Inventory</span>
+          <span>Customers</span>
+        </div>
+      </section>
 
-      <div className="relative z-10 w-full max-w-4xl px-4 py-8">
-        {/* Welcome Message (shown for 2s then transitions) */}
-        {showWelcome ? (
-          <div
-            id="welcome-message"
-            onClick={() => setShowWelcome(false)}
-            className="text-center cursor-pointer transition-all duration-700 animate-fadeIn"
-            style={{
-              fontSize: '2.4rem',
-              color: 'white',
-              textAlign: 'center',
-              padding: '60px 0',
-              fontWeight: 700,
-              textShadow: '0 2px 10px rgba(0,0,0,0.6)',
-            }}
-          >
-            Welcome to Regal POS
-            <div className="text-sm font-normal text-purple-200 mt-2 opacity-80">
-              Click anywhere to proceed
-            </div>
+      <section className="login-form-panel">
+        <div className="login-form-card">
+          <div className="login-card-heading">
+            <p className="login-store-label">Your store, all in one place</p>
+            <h2>{requiresSetup ? 'Set up this device' : 'Welcome back'}</h2>
+            <p>
+              {requiresSetup
+                ? 'Create this device’s administrator sign-in to get started.'
+                : 'Sign in to pick up where you left off.'}
+            </p>
           </div>
-        ) : (
-          /* Exact #login-form section from demo.regalpos.pk/Admin/Login */
-          <div
-            id="login-form"
-            className="w-full max-w-3xl mx-auto rounded-2xl p-6 md:p-8 animate-fadeIn"
-            style={{
-              background: 'rgba(255, 255, 255, 0.15)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              borderRadius: '20px',
-              padding: '30px',
-              boxShadow: '0 0 25px rgba(0, 0, 0, 0.4)',
-              color: 'white',
-              border: '1px solid rgba(255, 255, 255, 0.35)',
-            }}
-          >
-            <div className="text-center mb-6">
-              <h1
-                className="heading-section"
-                style={{
-                  fontWeight: 'bold',
-                  fontSize: '2.2rem',
-                  letterSpacing: '1px',
-                  color: '#fff',
-                  margin: 0,
-                }}
+
+          <form onSubmit={handleSubmit} className="login-form">
+            <label htmlFor="login-username">Administrator username</label>
+            <input
+              id="login-username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              minLength={2}
+              required
+            />
+
+            <label htmlFor="login-password">
+              {requiresSetup ? 'Create password (at least 10 characters)' : 'Password'}
+            </label>
+            <div className="login-password-wrap">
+              <input
+                id="login-password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete={requiresSetup ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={requiresSetup ? 10 : 1}
+                required
+              />
+              <button
+                type="button"
+                className="login-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
               >
-                LOGIN
-              </h1>
+                {showPassword
+                  ? <EyeOff size={17} aria-hidden="true" />
+                  : <Eye size={17} aria-hidden="true" />}
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-6">
-              {/* Image Column */}
-              <div className="image-column text-center flex flex-col items-center justify-center">
-                <img
-                  src="/assets/logo-login.png"
-                  alt="Login Image"
-                  className="w-48 max-w-full h-auto drop-shadow-xl"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/assets/regalposlogo.png';
-                  }}
+            {requiresSetup && (
+              <>
+                <label htmlFor="login-confirm-password">Confirm password</label>
+                <input
+                  id="login-confirm-password"
+                  name="confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  minLength={10}
+                  required
                 />
+              </>
+            )}
 
-                {/* Quick preset buttons matching original HTML #admin-button and #cashier-button */}
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    id="admin-button"
-                    onClick={handleAdminClick}
-                    className="px-3 py-1.5 rounded bg-white/20 hover:bg-white/30 text-white text-xs font-semibold border border-white/30 transition"
-                  >
-                    Admin (1234)
-                  </button>
-                  <button
-                    type="button"
-                    id="cashier-button"
-                    onClick={handleCashierClick}
-                    className="px-3 py-1.5 rounded bg-white/20 hover:bg-white/30 text-white text-xs font-semibold border border-white/30 transition"
-                  >
-                    Cashier (1234)
-                  </button>
-                </div>
-              </div>
+            {errorMsg && <p className="login-error" role="alert">{errorMsg}</p>}
 
-              {/* Login Wrap */}
-              <div className="login-wrap p-0">
-                <form onSubmit={handleSubmit} className="signin-form space-y-3.5">
-                  <div className="form-group">
-                    <select
-                      name="ad_role"
-                      id="ad_role"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value as any)}
-                      className="w-full px-3 py-2.5 rounded-md text-sm text-white focus:outline-none"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        height: '42px',
-                      }}
-                    >
-                      <option value="" disabled style={{ color: '#000' }}>Role</option>
-                      <option value="Admin" style={{ color: '#000' }}>Admin</option>
-                      <option value="cashier" style={{ color: '#000' }}>cashier</option>
-                      <option value="Store Manager" style={{ color: '#000' }}>Store Manager</option>
-                    </select>
-                  </div>
+            <button type="submit" className="login-submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Please wait…' : requiresSetup ? 'Create administrator' : 'Sign in'}
+              <ArrowRight size={17} aria-hidden="true" />
+            </button>
+          </form>
 
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      id="ad_name"
-                      name="ad_name"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      autoComplete="off"
-                      placeholder="Username"
-                      required
-                      className="w-full px-3 py-2.5 rounded-md text-sm text-white placeholder-white/70 focus:outline-none"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        height: '42px',
-                      }}
-                    />
-                  </div>
-
-                  <div className="form-group relative">
-                    <input
-                      id="password-field"
-                      name="ad_password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      autoComplete="off"
-                      placeholder="Password"
-                      required
-                      className="w-full px-3 py-2.5 rounded-md text-sm text-white placeholder-white/70 focus:outline-none pr-10"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.25)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        height: '42px',
-                      }}
-                    />
-                    <span
-                      onClick={() => setShowPassword(!showPassword)}
-                      className={`fa fa-fw ${showPassword ? 'fa-eye-slash' : 'fa-eye'} field-icon toggle-password absolute right-3 top-3 text-white/80 hover:text-white cursor-pointer`}
-                      style={{ fontSize: '16px' }}
-                    />
-                  </div>
-
-                  {errorMsg && (
-                    <div
-                      className="error-message p-2 text-center text-xs rounded"
-                      style={{
-                        color: '#ffcccc',
-                        background: 'rgba(255, 0, 0, 0.2)',
-                      }}
-                    >
-                      {errorMsg}
-                    </div>
-                  )}
-
-                  <div className="form-group pt-1">
-                    <button
-                      type="submit"
-                      className="w-full py-2.5 px-3 rounded-lg text-sm font-bold uppercase transition duration-300 submit"
-                      style={{
-                        background: 'rgba(173, 216, 230, 0.3)',
-                        color: '#fff',
-                        border: '1px solid rgba(255, 255, 255, 0.5)',
-                        borderRadius: '8px',
-                        letterSpacing: '0.8px',
-                        boxShadow: '0 0 10px rgba(173, 216, 230, 0.5)',
-                        backdropFilter: 'blur(8px)',
-                        height: '42px',
-                      }}
-                    >
-                      Sign In
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            {/* Authentic Footer Note & Contacts */}
-            <div className="row text-center mt-6 pt-4 border-t border-white/20 space-y-1">
-              <h6
-                style={{
-                  fontWeight: 'bold',
-                  color: 'white',
-                  textAlign: 'center',
-                  fontSize: '0.85rem',
-                  margin: 0,
-                  opacity: 0.95,
-                }}
-              >
-                Designed and Developed By Reliable Technologies
-              </h6>
-
-              <div
-                className="justify-content-center text-center"
-                style={{
-                  fontWeight: 'bold',
-                  color: 'white',
-                  fontSize: '0.8rem',
-                }}
-              >
-                <a
-                  href="tel:+923102673651"
-                  style={{ fontWeight: 'bold', color: 'white', textDecoration: 'none' }}
-                >
-                  Contact/Whatsapp: +92 310 2673651
-                </a>{' '}
-                <a
-                  href="https://reliabletech.pk/"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ fontWeight: 'bold', color: 'white', textDecoration: 'none' }}
-                >
-                  | Website : www.reliabletech.pk
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+          <p className="login-device-note">
+            This install keeps its data on this device. Use a strong password and secure the device itself.
+          </p>
+        </div>
+      </section>
+    </main>
   );
 };

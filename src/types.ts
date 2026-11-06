@@ -88,6 +88,7 @@ export interface Salesman {
   id: number;
   name: string;
   phone: string;
+  address?: string;
   commissionRate: number;
   totalSales: number;
 }

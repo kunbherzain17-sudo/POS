@@ -289,20 +289,16 @@ export const PosInvoice: React.FC = () => {
     e.preventDefault();
     if (!newCustName.trim()) return;
 
-    addCustomer({
+    const newCustomer = addCustomer({
       name: newCustName.trim(),
-      phone: newCustPhone.trim() || '03000000000',
-      address: newCustAddress.trim() || 'Karachi',
-      cnic: '42101-0000000-0',
+      phone: newCustPhone.trim(),
+      address: newCustAddress.trim(),
       balance: 0,
       totalPurchasing: 0,
       totalPaid: 0,
     });
 
-    const newCust = customers[0];
-    if (newCust) {
-      setSelectedCustomerId(newCust.id);
-    }
+    setSelectedCustomerId(newCustomer.id);
     setNewCustName('');
     setNewCustPhone('');
     setNewCustAddress('');
@@ -331,12 +327,13 @@ export const PosInvoice: React.FC = () => {
     const amountPaidVal =
       paidAmountInput === '' ? netPayable : parseFloat(paidAmountInput) || 0;
     const changeDueVal = Math.max(0, amountPaidVal - netPayable);
+    const checkoutTime = new Date();
 
     const orderData: Omit<Order, 'orderId'> = {
       customerName: currentCustomer.name,
       customerId: currentCustomer.id,
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toTimeString().split(' ')[0].substring(0, 5),
+      date: `${checkoutTime.getFullYear()}-${String(checkoutTime.getMonth() + 1).padStart(2, '0')}-${String(checkoutTime.getDate()).padStart(2, '0')}`,
+      time: checkoutTime.toTimeString().split(' ')[0].substring(0, 5),
       items: cartItems.map((c) => ({
         productId: c.productId,
         name: c.name,
@@ -1032,11 +1029,9 @@ export const PosInvoice: React.FC = () => {
                     className="w-full bg-white border border-slate-300 rounded-lg p-2 font-semibold text-slate-800 focus:ring-2 focus:ring-purple-400"
                   >
                     <option value="Cash">Cash Drawer</option>
-                    <option value="easypaisa">EasyPaisa</option>
-                    <option value="Ubl">UBL Bank</option>
-                    <option value="cash petty">Cash Petty</option>
-                    <option value="Feg">Faysal Bank</option>
-                    <option value="soneri">Soneri Bank</option>
+                    {banks.map((bank) => (
+                      <option key={bank.id} value={bank.bankName}>{bank.bankName}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -1048,9 +1043,9 @@ export const PosInvoice: React.FC = () => {
                     className="w-full bg-white border border-slate-300 rounded-lg p-2 font-semibold text-slate-800 focus:ring-2 focus:ring-purple-400"
                   >
                     <option value="None">None</option>
-                    <option value="Rehman">Rehman</option>
-                    <option value="Jawad khan">Jawad khan</option>
-                    <option value="Anas">Anas</option>
+                    {salesmen.map((salesman) => (
+                      <option key={salesman.id} value={salesman.name}>{salesman.name}</option>
+                    ))}
                   </select>
                 </div>
 

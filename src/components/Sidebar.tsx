@@ -1,144 +1,186 @@
 import React from 'react';
+import {
+  Boxes,
+  FileClock,
+  History,
+  Landmark,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  ReceiptText,
+  RotateCcw,
+  Settings2,
+  ShoppingCart,
+  Store,
+  Truck,
+  Undo2,
+  Users,
+  UserRound,
+  Wallet,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { usePos } from '../context/PosContext';
-import { AppView } from '../types';
+import type { AppView } from '../types';
+
+interface MenuItem {
+  id: AppView;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+const menuGroups: { label: string; items: MenuItem[] }[] = [
+  {
+    label: 'Workspace',
+    items: [{ id: 'dashboard', label: 'Overview', href: '/', icon: LayoutDashboard }],
+  },
+  {
+    label: 'Sales',
+    items: [
+      { id: 'invoice', label: 'New sale', href: '/Admin/newinvoice', icon: ShoppingCart },
+      { id: 'salesview', label: 'Sales history', href: '/Admin/salesview', icon: History },
+      { id: 'duplicatebill', label: 'Find an invoice', href: '/Admin/Duplicatebill', icon: FileClock },
+      { id: 'refund', label: 'Refund items', href: '/Admin/refund', icon: RotateCcw },
+    ],
+  },
+  {
+    label: 'Store',
+    items: [
+      { id: 'products', label: 'Products', href: '/Admin/Viewproduct', icon: Package },
+      { id: 'stock', label: 'Inventory', href: '/Admin/ViewStock', icon: Boxes },
+      { id: 'customers', label: 'Customers', href: '/Admin/Viewcustomer', icon: Users },
+      { id: 'vendors', label: 'Suppliers', href: '/Admin/Viewvendor', icon: Truck },
+      { id: 'salesman', label: 'Salespeople', href: '/Admin/Viewsalesman', icon: UserRound },
+    ],
+  },
+  {
+    label: 'Accounts',
+    items: [
+      { id: 'expenses', label: 'Expenses', href: '/Admin/Viewexpense', icon: Wallet },
+      { id: 'banks', label: 'Cash & banks', href: '/Admin/Viewbank', icon: Landmark },
+      { id: 'purchasereturn', label: 'Purchase returns', href: '/Admin/PurchaseReturn', icon: Undo2 },
+    ],
+  },
+  {
+    label: 'Settings',
+    items: [
+      { id: 'administration', label: 'Administration', href: '/Admin/Viewadmin', icon: Settings2 },
+    ],
+  },
+];
 
 export const Sidebar: React.FC = () => {
   const { currentView, setCurrentView, logout, sidebarOpen, setSidebarOpen, user } = usePos();
 
-  const menuItems: { id: AppView; label: string; href: string; isInvoice?: boolean }[] = [
-    { id: 'dashboard', label: 'Dashboard', href: '/' },
-    { id: 'administration', label: 'Administration', href: '/Admin/Viewadmin' },
-    { id: 'products', label: 'Products', href: '/Admin/Viewproduct' },
-    { id: 'customers', label: 'Customers', href: '/Admin/Viewcustomer' },
-    { id: 'vendors', label: 'Vendors', href: '/Admin/Viewvendor' },
-    { id: 'stock', label: 'Stock', href: '/Admin/ViewStock' },
-    { id: 'expenses', label: 'Expenses', href: '/Admin/Viewexpense' },
-    { id: 'duplicatebill', label: 'Duplicate Bill', href: '/Admin/Duplicatebill' },
-    { id: 'invoice', label: 'Invoice', href: `/Admin/newinvoice?ad_name=${user?.name || 'Admin'}`, isInvoice: true },
-    { id: 'salesview', label: 'Sales View', href: '/Admin/salesview' },
-    { id: 'refund', label: 'Itemwise Refund', href: '/Admin/refund' },
-    { id: 'banks', label: 'Banks', href: '/Admin/Viewbank' },
-    { id: 'purchasereturn', label: 'Purchase Return', href: '/Admin/PurchaseReturn' },
-    { id: 'salesman', label: 'Salesman', href: '/Admin/Viewsalesman' },
-  ];
+  const closeSidebarOnMobile = () => {
+    if (window.matchMedia('(max-width: 860px)').matches) {
+      setSidebarOpen(false);
+    }
+  };
 
   return (
-    <nav
-      id="sidebar"
-      style={{
-        minWidth: sidebarOpen ? '250px' : '0px',
-        maxWidth: sidebarOpen ? '250px' : '0px',
-        width: sidebarOpen ? '250px' : '0px',
-        backgroundColor: '#866ec7',
-        color: '#fff',
-        transition: 'all 0.3s ease',
-        position: 'relative',
-        height: '100vh',
-        overflow: 'visible',
-      }}
-      className={!sidebarOpen ? 'active' : ''}
-    >
-      {/* Circular Toggle Button Overlapping Right Edge (#sidebarCollapse) */}
-      <div className="custom-menu">
+    <>
+      {sidebarOpen && (
         <button
           type="button"
-          id="sidebarCollapse"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="btn-toggle"
-          title="Toggle Menu"
-        >
-          <i className="fa fa-bars" />
-          <span className="sr-only">Toggle Menu</span>
-        </button>
-      </div>
-
-      <div
-        className="p-4 pt-5"
-        style={{
-          paddingRight: '0px !important',
-          paddingLeft: '0px !important',
-          visibility: sidebarOpen ? 'visible' : 'hidden',
-          opacity: sidebarOpen ? 1 : 0,
-          transition: 'opacity 0.2s ease',
-        }}
+          className="sidebar-backdrop"
+          aria-label="Close navigation"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <aside
+        id="sidebar"
+        className={`app-sidebar${sidebarOpen ? ' is-open' : ' is-closed'}`}
+        aria-label="Main navigation"
+        aria-hidden={!sidebarOpen}
+        inert={!sidebarOpen}
       >
-        <a href="#" onClick={(e) => { e.preventDefault(); setCurrentView('dashboard'); }} className="logo px-3 block">
-          <img
-            src="/assets/regalposlogo.png"
-            alt="Logo"
-            style={{
-              width: '100%',
-              height: '60px',
-              marginTop: '0px',
-              marginBottom: '15px',
-              objectFit: 'contain',
+        <div className="sidebar-brand">
+          <a
+            href="/"
+            className="sidebar-brand-link"
+            onClick={(event) => {
+              event.preventDefault();
+              setCurrentView('dashboard');
+              closeSidebarOnMobile();
             }}
-          />
-        </a>
-
-        <div
-          className="sidebar-scroll"
-          style={{
-            height: 'calc(100vh - 120px)',
-            overflowY: 'auto',
-          }}
-        >
-          <ul className="list-unstyled components mb-5" style={{ padding: 0, margin: 0 }}>
-            {menuItems.map((item) => {
-              const isActive = currentView === item.id;
-              return (
-                <li
-                  key={item.id}
-                  className={isActive ? 'active' : ''}
-                  style={{
-                    backgroundColor: isActive ? 'darkslateblue' : 'transparent',
-                    lineHeight: '1.5',
-                  }}
-                >
-                  <a
-                    href={item.href}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentView(item.id);
-                    }}
-                    style={{
-                      padding: '8px 25px',
-                      display: 'block',
-                      color: '#ffffff',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                      fontSize: '15px',
-                      fontWeight: isActive ? 600 : 400,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              );
-            })}
-
-            <li>
-              <a
-                href="/Admin/Logout"
-                onClick={(e) => {
-                  e.preventDefault();
-                  logout();
-                }}
-                style={{
-                  padding: '8px 25px',
-                  display: 'block',
-                  color: '#ffffff',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                  fontSize: '15px',
-                  textDecoration: 'none',
-                }}
-              >
-                Logout
-              </a>
-            </li>
-          </ul>
+          >
+            <span className="sidebar-brand-mark"><Store size={20} aria-hidden="true" /></span>
+            <span className="sidebar-brand-copy">
+              <strong>Regal</strong>
+              <span>Point of sale</span>
+            </span>
+          </a>
+          <button
+            type="button"
+            className="sidebar-close"
+            aria-label="Close navigation"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
         </div>
-      </div>
-    </nav>
+
+        <nav className="sidebar-navigation">
+          {menuGroups.map((group) => (
+            <section className="sidebar-group" key={group.label}>
+              <h2 className="sidebar-group-title">{group.label}</h2>
+              <ul>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = currentView === item.id;
+                  const href =
+                    item.id === 'invoice'
+                      ? `${item.href}?ad_name=${encodeURIComponent(user?.name || 'Admin')}`
+                      : item.href;
+
+                  return (
+                    <li key={item.id}>
+                      <a
+                        href={href}
+                        className={`sidebar-link${isActive ? ' is-active' : ''}${item.id === 'invoice' ? ' is-invoice' : ''}`}
+                        aria-current={isActive ? 'page' : undefined}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setCurrentView(item.id);
+                          closeSidebarOnMobile();
+                        }}
+                      >
+                        <Icon className="sidebar-link-icon" size={18} aria-hidden="true" />
+                        <span>{item.label}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </nav>
+
+        <footer className="sidebar-footer">
+          <div className="sidebar-profile">
+            <span className="sidebar-avatar" aria-hidden="true">
+              {(user?.name || 'A').slice(0, 1).toUpperCase()}
+            </span>
+            <span className="sidebar-profile-copy">
+              <strong>{user?.name || 'Admin'}</strong>
+              <span>{user?.role || 'Store team'}</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            className="sidebar-logout"
+            onClick={() => {
+              closeSidebarOnMobile();
+              logout();
+            }}
+          >
+            <LogOut size={17} aria-hidden="true" />
+            Sign out
+          </button>
+        </footer>
+      </aside>
+    </>
   );
 };

@@ -6,6 +6,7 @@ import {
   Expense,
   Order,
   OrderItem,
+  CartItem,
   BankAccount,
   Salesman,
   AppView,
@@ -32,19 +33,26 @@ export interface StoreSettings {
 
 interface UserSession {
   name: string;
-  role: 'Admin' | 'cashier' | 'Store Manager';
+  role: 'Admin';
+}
+
+interface LocalCredentials {
+  username: string;
+  salt: string;
+  digest: string;
+  iterations: number;
 }
 
 interface PosContextType {
   user: UserSession | null;
-  login: (name: string, role: 'Admin' | 'cashier' | 'Store Manager', password: string) => boolean;
+  requiresSetup: boolean;
+  setupAdministrator: (name: string, password: string) => Promise<void>;
+  login: (name: string, password: string) => Promise<boolean>;
   logout: () => void;
   currentView: AppView;
   setCurrentView: (view: AppView) => void;
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  browserUrl: string;
-  setBrowserUrl: (url: string) => void;
 
   products: Product[];
   addProduct: (product: Omit<Product, 'id'>) => void;
@@ -52,7 +60,7 @@ interface PosContextType {
   deleteProduct: (id: number) => void;
 
   customers: Customer[];
-  addCustomer: (customer: Omit<Customer, 'id'>) => void;
+  addCustomer: (customer: Omit<Customer, 'id'>) => Customer;
   adjustCustomerBalance: (id: number, amount: number) => void;
 
   vendors: Vendor[];
@@ -66,7 +74,11 @@ interface PosContextType {
   refundItem: (orderId: number, productId: number, quantity: number, refundAmount: number) => boolean;
 
   banks: BankAccount[];
+  addBank: (bank: Omit<BankAccount, 'id'>) => void;
+  deleteBank: (id: number) => void;
   salesmen: Salesman[];
+  addSalesman: (salesman: Omit<Salesman, 'id'>) => void;
+  deleteSalesman: (id: number) => void;
   categories: string[];
   addCategory: (cat: string) => void;
 
@@ -80,7 +92,7 @@ interface PosContextType {
 
   exportDatabaseBackup: () => void;
   importDatabaseBackup: (jsonString: string) => boolean;
-  resetToDemoData: () => void;
+  resetToCleanData: () => void;
   playScanBeep: () => void;
 
   // Stats
@@ -98,27 +110,218 @@ interface PosContextType {
 }
 
 const DEFAULT_SETTINGS: StoreSettings = {
-  storeName: 'REGAL POS',
-  tagline: 'Point of Sale & Retail Management System',
-  address: 'Trade Center, Near Bolan Sajji, Block 13 A, Gulshan-e-Iqbal, Karachi',
-  phone: '0310-2673651',
+  storeName: '',
+  tagline: '',
+  address: '',
+  phone: '',
   currency: 'Rs.',
-  footerNote: 'Thank You for Shopping! • Reliable Technologies',
+  footerNote: 'Thank You for Shopping!',
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+const isString = (value: unknown): value is string => typeof value === 'string';
+const isNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+const isArrayOf = <T,>(value: unknown, isItem: (item: unknown) => item is T): value is T[] =>
+  Array.isArray(value) && value.every(isItem);
+
+const isProduct = (value: unknown): value is Product =>
+  isRecord(value) &&
+  isNumber(value.id) &&
+  isString(value.name) &&
+  isNumber(value.price) &&
+  isNumber(value.cost) &&
+  isNumber(value.discount) &&
+  isString(value.barcode) &&
+  isString(value.category) &&
+  isNumber(value.quantityLimit) &&
+  isNumber(value.stock);
+
+const isCustomer = (value: unknown): value is Customer =>
+  isRecord(value) &&
+  isNumber(value.id) &&
+  isString(value.name) &&
+  isString(value.phone) &&
+  isNumber(value.balance) &&
+  isNumber(value.totalPurchasing) &&
+  (value.totalPaid === undefined || isNumber(value.totalPaid)) &&
+  (value.address === undefined || isString(value.address)) &&
+  (value.cnic === undefined || isString(value.cnic));
+
+const isVendor = (value: unknown): value is Vendor =>
+  isRecord(value) &&
+  isNumber(value.id) &&
+  isString(value.name) &&
+  isString(value.contact) &&
+  isNumber(value.balance) &&
+  isNumber(value.totalPurchasing);
+
+const isExpense = (value: unknown): value is Expense =>
+  isRecord(value) &&
+  isNumber(value.id) &&
+  isString(value.type) &&
+  isString(value.expense) &&
+  isNumber(value.amount) &&
+  isString(value.date) &&
+  (value.notes === undefined || isString(value.notes));
+
+const hasCommonItemFields = (value: unknown): value is Record<string, unknown> =>
+  isRecord(value) &&
+  isNumber(value.productId) &&
+  isString(value.name) &&
+  isNumber(value.price) &&
+  isNumber(value.cost) &&
+  isNumber(value.quantity) &&
+  isNumber(value.total);
+
+const isCartItem = (value: unknown): value is CartItem =>
+  hasCommonItemFields(value) &&
+  isString(value.barcode) &&
+  isNumber(value.discountPercent);
+
+const isOrderItem = (value: unknown): value is OrderItem =>
+  hasCommonItemFields(value) &&
+  isNumber(value.pDiscount);
+
+const isOrder = (value: unknown): value is Order =>
+  isRecord(value) &&
+  isNumber(value.orderId) &&
+  isString(value.customerName) &&
+  (value.customerId === undefined || isNumber(value.customerId)) &&
+  isString(value.date) &&
+  isString(value.time) &&
+  isArrayOf(value.items, isOrderItem) &&
+  isNumber(value.subtotal) &&
+  isNumber(value.totalDiscount) &&
+  isNumber(value.tax) &&
+  isNumber(value.totalPrice) &&
+  isNumber(value.amountPaid) &&
+  isNumber(value.changeDue) &&
+  (value.paymentMethod === 'Cash' || value.paymentMethod === 'Card' || value.paymentMethod === 'Bank Transfer') &&
+  isString(value.cashier);
+
+const isBankAccount = (value: unknown): value is BankAccount =>
+  isRecord(value) &&
+  isNumber(value.id) &&
+  isString(value.bankName) &&
+  isString(value.accountTitle) &&
+  isString(value.accountNumber) &&
+  isNumber(value.balance);
+
+const isSalesman = (value: unknown): value is Salesman =>
+  isRecord(value) &&
+  isNumber(value.id) &&
+  isString(value.name) &&
+  isString(value.phone) &&
+  (value.address === undefined || isString(value.address)) &&
+  isNumber(value.commissionRate) &&
+  isNumber(value.totalSales);
+
+const isHeldBill = (value: unknown): value is Record<string, unknown> =>
+  isRecord(value) &&
+  isString(value.id) &&
+  isString(value.heldAt) &&
+  isString(value.customerName) &&
+  isNumber(value.customerId) &&
+  isArrayOf(value.items, isCartItem) &&
+  isString(value.note);
+
+const isStoreSettings = (value: unknown): value is StoreSettings =>
+  isRecord(value) &&
+  isString(value.storeName) &&
+  isString(value.tagline) &&
+  isString(value.address) &&
+  isString(value.phone) &&
+  isString(value.currency) &&
+  isString(value.footerNote);
+
+const CREDENTIALS_KEY = 'regal_local_credentials';
+const SESSION_KEY = 'regal_local_session';
+const PASSWORD_ITERATIONS = 310_000;
+
+const bytesToHex = (bytes: Uint8Array) =>
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+
+const derivePasswordDigest = async (password: string, saltHex: string, iterations: number) => {
+  if (!globalThis.crypto?.subtle) {
+    throw new Error('Secure password setup requires HTTPS or localhost. Open the installed app after connecting to its secure address once.');
+  }
+
+  const salt = Uint8Array.from(
+    { length: saltHex.length / 2 },
+    (_, index) => Number.parseInt(saltHex.slice(index * 2, index * 2 + 2), 16)
+  );
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+    key,
+    256
+  );
+  return bytesToHex(new Uint8Array(bits));
+};
+
+const readLocalCredentials = (serialized: string): LocalCredentials => {
+  let value: unknown;
+  try {
+    value = JSON.parse(serialized);
+  } catch {
+    throw new Error('Saved sign-in settings are unreadable. Restore a backup or clear this app’s local browser data.');
+  }
+
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('username' in value) ||
+    typeof value.username !== 'string' ||
+    !('salt' in value) ||
+    typeof value.salt !== 'string' ||
+    !/^[0-9a-f]{32}$/i.test(value.salt) ||
+    !('digest' in value) ||
+    typeof value.digest !== 'string' ||
+    !/^[0-9a-f]{64}$/i.test(value.digest) ||
+    !('iterations' in value) ||
+    typeof value.iterations !== 'number' ||
+    !Number.isInteger(value.iterations) ||
+    value.iterations < 100_000 ||
+    value.iterations > 1_000_000
+  ) {
+    throw new Error('Saved sign-in settings are invalid. Restore a backup or clear this app’s local browser data.');
+  }
+  return value as LocalCredentials;
 };
 
 const PosContext = createContext<PosContextType | undefined>(undefined);
 
 export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [serializedCredentials, setSerializedCredentials] = useState<string | null>(() =>
+    localStorage.getItem(CREDENTIALS_KEY)
+  );
   const [user, setUser] = useState<UserSession | null>(() => {
-    const saved = localStorage.getItem('regal_user');
-    return saved ? JSON.parse(saved) : { name: 'Admin', role: 'Admin' };
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    return saved ? { name: saved, role: 'Admin' } : null;
   });
 
   const [currentView, setCurrentView] = useState<AppView>(() => {
     return user ? 'dashboard' : 'login';
   });
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    window.matchMedia('(min-width: 861px)').matches
+  );
+
+  useEffect(() => {
+    const desktopLayout = window.matchMedia('(min-width: 861px)');
+    const syncSidebar = () => setSidebarOpen(desktopLayout.matches);
+    desktopLayout.addEventListener('change', syncSidebar);
+    return () => desktopLayout.removeEventListener('change', syncSidebar);
+  }, []);
 
   // Products
   const [products, setProducts] = useState<Product[]>(() => {
@@ -151,8 +354,14 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   // Banks & Salesmen
-  const [banks] = useState<BankAccount[]>(INITIAL_BANKS);
-  const [salesmen] = useState<Salesman[]>(INITIAL_SALESMEN);
+  const [banks, setBanks] = useState<BankAccount[]>(() => {
+    const saved = localStorage.getItem('regal_banks');
+    return saved ? JSON.parse(saved) : INITIAL_BANKS;
+  });
+  const [salesmen, setSalesmen] = useState<Salesman[]>(() => {
+    const saved = localStorage.getItem('regal_salesmen');
+    return saved ? JSON.parse(saved) : INITIAL_SALESMEN;
+  });
   const [categories, setCategories] = useState<string[]>(() => {
     const saved = localStorage.getItem('regal_categories');
     return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
@@ -167,9 +376,6 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Print modal
   const [activePrintOrder, setActivePrintOrder] = useState<Order | null>(null);
   const [printFormat, setPrintFormat] = useState<'thermal' | 'a4'>('thermal');
-
-  // Simulated browser URL
-  const [browserUrl, setBrowserUrl] = useState('https://demo.regalpos.pk/?ad_name=Admin');
 
   useEffect(() => {
     localStorage.setItem('regal_products', JSON.stringify(products));
@@ -196,70 +402,24 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [categories]);
 
   useEffect(() => {
+    localStorage.setItem('regal_banks', JSON.stringify(banks));
+  }, [banks]);
+
+  useEffect(() => {
+    localStorage.setItem('regal_salesmen', JSON.stringify(salesmen));
+  }, [salesmen]);
+
+  useEffect(() => {
     localStorage.setItem('regal_settings', JSON.stringify(storeSettings));
   }, [storeSettings]);
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem('regal_user', JSON.stringify(user));
+      sessionStorage.setItem(SESSION_KEY, user.name);
     } else {
-      localStorage.removeItem('regal_user');
+      sessionStorage.removeItem(SESSION_KEY);
     }
   }, [user]);
-
-  // Sync browser URL whenever view changes
-  useEffect(() => {
-    const baseUrl = 'https://demo.regalpos.pk';
-    switch (currentView) {
-      case 'login':
-        setBrowserUrl(`${baseUrl}/Admin/Login`);
-        break;
-      case 'dashboard':
-        setBrowserUrl(`${baseUrl}/?ad_name=${user?.name || 'Admin'}`);
-        break;
-      case 'invoice':
-        setBrowserUrl(`${baseUrl}/Admin/newinvoice?ad_name=${user?.name || 'Admin'}`);
-        break;
-      case 'products':
-        setBrowserUrl(`${baseUrl}/Admin/Viewproduct`);
-        break;
-      case 'customers':
-        setBrowserUrl(`${baseUrl}/Admin/Viewcustomer`);
-        break;
-      case 'vendors':
-        setBrowserUrl(`${baseUrl}/Admin/Viewvendor`);
-        break;
-      case 'stock':
-        setBrowserUrl(`${baseUrl}/Admin/ViewStock`);
-        break;
-      case 'expenses':
-        setBrowserUrl(`${baseUrl}/Admin/Viewexpense`);
-        break;
-      case 'duplicatebill':
-        setBrowserUrl(`${baseUrl}/Admin/Duplicatebill`);
-        break;
-      case 'salesview':
-        setBrowserUrl(`${baseUrl}/Admin/salesview`);
-        break;
-      case 'refund':
-        setBrowserUrl(`${baseUrl}/Admin/refund`);
-        break;
-      case 'banks':
-        setBrowserUrl(`${baseUrl}/Admin/Viewbank`);
-        break;
-      case 'purchasereturn':
-        setBrowserUrl(`${baseUrl}/Admin/PurchaseReturn`);
-        break;
-      case 'salesman':
-        setBrowserUrl(`${baseUrl}/Admin/Viewsalesman`);
-        break;
-      case 'administration':
-        setBrowserUrl(`${baseUrl}/Admin/Viewadmin`);
-        break;
-      default:
-        setBrowserUrl(`${baseUrl}/`);
-    }
-  }, [currentView, user]);
 
   // Web Audio API offline scanner beep
   const playScanBeep = () => {
@@ -280,14 +440,44 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const login = (name: string, role: 'Admin' | 'cashier' | 'Store Manager', pass: string) => {
-    if (pass === '1234' || pass.length > 0) {
-      const session: UserSession = { name: name || 'Admin', role };
-      setUser(session);
-      setCurrentView('dashboard');
-      return true;
+  const setupAdministrator = async (name: string, password: string) => {
+    if (serializedCredentials !== null || localStorage.getItem(CREDENTIALS_KEY) !== null) {
+      throw new Error('This device already has an administrator account. Sign in instead.');
     }
-    return false;
+    if (name.trim().length < 2 || password.length < 10) {
+      throw new Error('Enter a username of at least 2 characters and a password of at least 10 characters.');
+    }
+    if (!globalThis.crypto?.getRandomValues) {
+      throw new Error('Secure password setup is unavailable in this browser. Use an up-to-date browser on HTTPS or localhost.');
+    }
+
+    const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+    const credentials: LocalCredentials = {
+      username: name.trim(),
+      salt,
+      digest: await derivePasswordDigest(password, salt, PASSWORD_ITERATIONS),
+      iterations: PASSWORD_ITERATIONS,
+    };
+    const serialized = JSON.stringify(credentials);
+    localStorage.setItem(CREDENTIALS_KEY, serialized);
+    setSerializedCredentials(serialized);
+    localStorage.removeItem('regal_user');
+    setUser({ name: credentials.username, role: 'Admin' });
+    setCurrentView('dashboard');
+  };
+
+  const login = async (name: string, password: string) => {
+    if (!serializedCredentials) return false;
+    const credentials = readLocalCredentials(serializedCredentials);
+    if (credentials.username.toLocaleLowerCase() !== name.trim().toLocaleLowerCase()) {
+      return false;
+    }
+    const digest = await derivePasswordDigest(password, credentials.salt, credentials.iterations);
+    if (digest !== credentials.digest) return false;
+
+    setUser({ name: credentials.username, role: 'Admin' });
+    setCurrentView('dashboard');
+    return true;
   };
 
   const logout = () => {
@@ -311,7 +501,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addCustomer = (c: Omit<Customer, 'id'>) => {
     const newId = customers.length > 0 ? Math.max(...customers.map((item) => item.id)) + 1 : 1;
-    setCustomers((prev) => [{ ...c, id: newId }, ...prev]);
+    const newCustomer = { ...c, id: newId };
+    setCustomers((prev) => [newCustomer, ...prev]);
+    return newCustomer;
   };
 
   const adjustCustomerBalance = (id: number, amount: number) => {
@@ -331,7 +523,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const createOrder = (orderData: Omit<Order, 'orderId'>): Order => {
-    const newOrderId = orders.length > 0 ? Math.max(...orders.map((o) => o.orderId)) + 1 : 205;
+    const newOrderId = orders.length > 0 ? Math.max(...orders.map((o) => o.orderId)) + 1 : 1;
     const newOrder: Order = {
       ...orderData,
       orderId: newOrderId,
@@ -414,6 +606,28 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addBank = (bank: Omit<BankAccount, 'id'>) => {
+    setBanks((previous) => {
+      const id = previous.length > 0 ? Math.max(...previous.map((item) => item.id)) + 1 : 1;
+      return [...previous, { ...bank, id }];
+    });
+  };
+
+  const deleteBank = (id: number) => {
+    setBanks((previous) => previous.filter((bank) => bank.id !== id));
+  };
+
+  const addSalesman = (salesman: Omit<Salesman, 'id'>) => {
+    setSalesmen((previous) => {
+      const id = previous.length > 0 ? Math.max(...previous.map((item) => item.id)) + 1 : 1;
+      return [...previous, { ...salesman, id }];
+    });
+  };
+
+  const deleteSalesman = (id: number) => {
+    setSalesmen((previous) => previous.filter((salesman) => salesman.id !== id));
+  };
+
   const updateStoreSettings = (settings: StoreSettings) => {
     setStoreSettings(settings);
   };
@@ -429,6 +643,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       vendors,
       expenses,
       orders,
+      banks,
+      salesmen,
+      heldBills: JSON.parse(localStorage.getItem('regal_held_bills') || '[]'),
       categories,
       storeSettings,
     };
@@ -439,33 +656,78 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     a.href = url;
     a.download = `RegalPOS_Database_Backup_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const importDatabaseBackup = (jsonString: string): boolean => {
+    let parsed: unknown;
     try {
-      const parsed = JSON.parse(jsonString);
-      if (parsed.products && Array.isArray(parsed.products)) setProducts(parsed.products);
-      if (parsed.customers && Array.isArray(parsed.customers)) setCustomers(parsed.customers);
-      if (parsed.vendors && Array.isArray(parsed.vendors)) setVendors(parsed.vendors);
-      if (parsed.expenses && Array.isArray(parsed.expenses)) setExpenses(parsed.expenses);
-      if (parsed.orders && Array.isArray(parsed.orders)) setOrders(parsed.orders);
-      if (parsed.categories && Array.isArray(parsed.categories)) setCategories(parsed.categories);
-      if (parsed.storeSettings) setStoreSettings(parsed.storeSettings);
-      return true;
+      parsed = JSON.parse(jsonString);
     } catch {
       return false;
     }
+
+    if (!isRecord(parsed) || parsed.app !== 'Regal POS') return false;
+    const data = parsed;
+    if (
+      !isArrayOf(data.products, isProduct) ||
+      !isArrayOf(data.customers, isCustomer) ||
+      !isArrayOf(data.vendors, isVendor) ||
+      !isArrayOf(data.expenses, isExpense) ||
+      !isArrayOf(data.orders, isOrder) ||
+      !isArrayOf(data.categories, isString) ||
+      !isStoreSettings(data.storeSettings) ||
+      (data.banks !== undefined && !isArrayOf(data.banks, isBankAccount)) ||
+      (data.salesmen !== undefined && !isArrayOf(data.salesmen, isSalesman)) ||
+      (data.heldBills !== undefined && !isArrayOf(data.heldBills, isHeldBill))
+    ) {
+      return false;
+    }
+
+    const saveAndSet = <T,>(
+      key: string,
+      value: T,
+      setter: React.Dispatch<React.SetStateAction<T>>
+    ) => {
+      localStorage.setItem(key, JSON.stringify(value));
+      setter(value);
+    };
+    const banks = data.banks ?? [];
+    const salesmen = data.salesmen ?? [];
+    const heldBills = data.heldBills ?? [];
+    saveAndSet('regal_products', data.products, setProducts);
+    saveAndSet('regal_customers', data.customers, setCustomers);
+    saveAndSet('regal_vendors', data.vendors, setVendors);
+    saveAndSet('regal_expenses', data.expenses, setExpenses);
+    saveAndSet('regal_orders', data.orders, setOrders);
+    saveAndSet('regal_banks', banks, setBanks);
+    saveAndSet('regal_salesmen', salesmen, setSalesmen);
+    saveAndSet('regal_categories', data.categories, setCategories);
+    saveAndSet('regal_settings', data.storeSettings, setStoreSettings);
+    localStorage.setItem('regal_held_bills', JSON.stringify(heldBills));
+    return true;
   };
 
-  const resetToDemoData = () => {
+  const resetToCleanData = () => {
     setProducts(INITIAL_PRODUCTS);
     setCustomers(INITIAL_CUSTOMERS);
     setVendors(INITIAL_VENDORS);
     setExpenses(INITIAL_EXPENSES);
     setOrders(INITIAL_ORDERS);
+    setBanks(INITIAL_BANKS);
+    setSalesmen(INITIAL_SALESMEN);
     setCategories(INITIAL_CATEGORIES);
     setStoreSettings(DEFAULT_SETTINGS);
+    localStorage.removeItem('regal_held_bills');
+    localStorage.removeItem('regal_banks');
+    localStorage.removeItem('regal_salesmen');
+    localStorage.removeItem('regal_products');
+    localStorage.removeItem('regal_customers');
+    localStorage.removeItem('regal_vendors');
+    localStorage.removeItem('regal_expenses');
+    localStorage.removeItem('regal_orders');
+    localStorage.removeItem('regal_categories');
+    localStorage.removeItem('regal_settings');
   };
 
   // Calculate live KPI metrics
@@ -474,7 +736,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const totalPurchase = products.reduce((sum, p) => sum + p.cost * p.stock, 0);
   const customerBalance = customers.reduce((sum, c) => sum + c.balance, 0);
   const vendorBalance = vendors.reduce((sum, v) => sum + v.balance, 0);
-  const todayInvoices = orders.filter((o) => o.date === '2026-11-05' || o.date === new Date().toISOString().split('T')[0]).length;
+  const today = new Date();
+  const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayInvoices = orders.filter((order) => order.date === localToday).length;
   const recovery = orders.reduce((sum, o) => sum + o.amountPaid, 0);
   const shortStock = products.filter((p) => p.stock > 0 && p.stock <= p.quantityLimit).length;
   const outOfStock = products.filter((p) => p.stock <= 0).length;
@@ -495,14 +759,14 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <PosContext.Provider
       value={{
         user,
+        requiresSetup: serializedCredentials === null,
+        setupAdministrator,
         login,
         logout,
         currentView,
         setCurrentView,
         sidebarOpen,
         setSidebarOpen,
-        browserUrl,
-        setBrowserUrl,
         products,
         addProduct,
         updateProduct,
@@ -518,7 +782,11 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createOrder,
         refundItem,
         banks,
+        addBank,
+        deleteBank,
         salesmen,
+        addSalesman,
+        deleteSalesman,
         categories,
         addCategory,
         storeSettings,
@@ -529,7 +797,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setPrintFormat,
         exportDatabaseBackup,
         importDatabaseBackup,
-        resetToDemoData,
+        resetToCleanData,
         playScanBeep,
         kpiStats,
       }}

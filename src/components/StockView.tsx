@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronDown, Search } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { Product } from '../types';
 
@@ -81,7 +82,7 @@ export const StockView: React.FC = () => {
           onClick={() => setShowSearch(!showSearch)}
           style={{ backgroundColor: 'mediumpurple', color: '#fff', borderColor: 'mediumpurple' }}
         >
-          <i className="fa fa-search mr-1" /> Search
+          <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
         </button>
 
         <button
@@ -110,7 +111,7 @@ export const StockView: React.FC = () => {
             className="btn btn-primary action-btn flex items-center gap-1"
             style={{ backgroundColor: 'mediumpurple', color: '#fff', borderColor: 'mediumpurple' }}
           >
-            <span>Reports</span> <i className="fa fa-caret-down ml-1" />
+            <span>Reports</span> <ChevronDown className="ml-1 h-4 w-4" aria-hidden="true" />
           </button>
 
           {showDropdown && (

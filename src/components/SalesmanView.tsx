@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 
 export const SalesmanView: React.FC = () => {
-  const { salesmen } = usePos();
-  const [salesmanList, setSalesmanList] = useState([
-    { id: 1, name: 'Rehman', phone: '03123456780', address: 'Karachi, PK' },
-    { id: 2, name: 'Jawad khan', phone: '03223344551', address: 'Karachi, PK' },
-    { id: 3, name: 'Anas', phone: '03456677889', address: 'Karachi, PK' },
-  ]);
+  const { salesmen, addSalesman, deleteSalesman } = usePos();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -21,15 +17,13 @@ export const SalesmanView: React.FC = () => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    setSalesmanList([
-      ...salesmanList,
-      {
-        id: salesmanList.length + 1,
-        name: name.trim(),
-        phone: phone.trim() || '0',
-        address: address.trim() || '0',
-      },
-    ]);
+    addSalesman({
+      name: name.trim(),
+      phone: phone.trim(),
+      address: address.trim(),
+      commissionRate: 0,
+      totalSales: 0,
+    });
 
     setName('');
     setPhone('');
@@ -37,7 +31,7 @@ export const SalesmanView: React.FC = () => {
     setShowAddForm(false);
   };
 
-  const filtered = salesmanList.filter((s) => {
+  const filtered = salesmen.filter((s) => {
     if (!searchString.trim()) return true;
     const q = searchString.toLowerCase();
     return s.name.toLowerCase().includes(q) || s.phone.includes(q);
@@ -66,7 +60,7 @@ export const SalesmanView: React.FC = () => {
           className="btn btn-primary"
           style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
         >
-          <i className="fa fa-search mr-1" /> Search
+          <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
         </button>
       </div>
 
@@ -142,7 +136,6 @@ export const SalesmanView: React.FC = () => {
         </div>
       )}
 
-      {/* Salesman Table matching demo.regalpos.pk/Admin/Viewsalesman */}
       <div className="table-responsive overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs">
           <thead>
@@ -163,17 +156,9 @@ export const SalesmanView: React.FC = () => {
                   <div className="btn-group flex justify-center gap-2">
                     <button
                       type="button"
-                      onClick={() => alert(`Edit ${s.name}`)}
-                      className="btn btn-link text-info p-0 text-xs font-semibold"
-                      style={{ color: '#17a2b8', textDecoration: 'none' }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
                         if (confirm(`Delete ${s.name}?`)) {
-                          setSalesmanList(salesmanList.filter((x) => x.id !== s.id));
+                          deleteSalesman(s.id);
                         }
                       }}
                       className="btn btn-link text-danger p-0 text-xs font-semibold"
