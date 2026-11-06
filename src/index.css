@@ -1,0 +1,293 @@
+@import "tailwindcss";
+
+:root {
+  --theme: #866EC7;
+  --theme-soft: rgba(134, 110, 199, 0.08);
+  --theme-border: rgba(134, 110, 199, 0.25);
+  --sidebar-bg: #866ec7;
+  --sidebar-active: #483d8b; /* darkslateblue */
+}
+
+body {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  color: #212529;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+
+/* Regal POS Sidebar */
+#sidebar {
+  min-width: 250px;
+  max-width: 250px;
+  background: var(--sidebar-bg);
+  color: #fff;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+#sidebar .logo {
+  display: block;
+  text-align: center;
+}
+
+#sidebar ul.components {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+#sidebar ul li a {
+  padding: 8px 25px !important;
+  display: block;
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 15px !important;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+#sidebar ul li.active > a,
+#sidebar ul li.active {
+  background-color: var(--sidebar-active) !important;
+  color: #ffffff !important;
+}
+
+#sidebar ul li:hover,
+#sidebar ul li a:hover {
+  background-color: var(--sidebar-active) !important;
+  color: #ffffff !important;
+}
+
+/* Circular Toggle Button */
+.custom-menu {
+  display: inline-block;
+  position: absolute;
+  top: 20px;
+  right: -20px;
+  z-index: 99999;
+}
+
+.custom-menu .btn-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6749b9;
+  border: 2px solid #866ec7;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.custom-menu .btn-toggle:hover {
+  background: #53399b;
+}
+
+/* License Alert */
+.license-alert {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Regal POS Global Buttons & Form Controls */
+.btn-regal,
+.btn-primary {
+  background-color: #866ec7 !important;
+  border-color: #866ec7 !important;
+  color: #fff !important;
+  border-radius: 4px;
+  font-weight: 500;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #6749b9 !important;
+  border-color: #6749b9 !important;
+}
+
+.btn-success {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: #fff !important;
+  border-radius: 4px;
+  font-weight: 500;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-success:hover {
+  background-color: #218838 !important;
+}
+
+.btn-secondary {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: #fff !important;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-danger {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: #fff !important;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+}
+
+.form-control-regal {
+  height: 38px;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 6px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.form-control-regal:focus {
+  border-color: #866ec7;
+  box-shadow: 0 0 0 0.2rem rgba(134, 110, 199, 0.25);
+}
+
+/* KPI Strips */
+.kpi-strip {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e9ecef;
+  border-top: 3px solid var(--theme-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background .2s ease;
+}
+
+.kpi-strip:hover {
+  background: var(--theme-soft);
+}
+
+.kpi-strip .label {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.kpi-strip .value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.kpi-strip.warn {
+  border-left: 4px solid #f0ad4e;
+}
+
+.kpi-strip.danger {
+  border-left: 4px solid #d9534f;
+}
+
+/* Glassmorphic Login */
+.glass-login-wrap {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.frosty-submit {
+  background: rgba(173, 216, 230, 0.3) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  box-shadow: 0 0 10px rgba(173, 216, 230, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.frosty-submit:hover {
+  background: rgba(173, 216, 230, 0.6) !important;
+  box-shadow: 0 0 20px rgba(173, 216, 230, 0.8), 0 0 40px rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+}
+
+/* Table styling matching regal pos */
+.regal-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  font-size: 13px;
+}
+
+.regal-table th {
+  background-color: #9370DB;
+  color: #fff;
+  font-weight: 600;
+  padding: 6px 10px;
+  text-align: left;
+  border: 1px solid #dee2e6;
+}
+
+.regal-table td {
+  padding: 6px 10px;
+  border: 1px solid #dee2e6;
+  color: #212529;
+}
+
+.regal-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.regal-table tr:hover {
+  background-color: rgba(134, 110, 199, 0.08);
+}
