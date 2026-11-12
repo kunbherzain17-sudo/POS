@@ -1908,6 +1908,81 @@ textarea:focus-visible {
     padding-right: 20px;
     padding-left: 20px;
   }
+
+  .product-table-desktop,
+  .inventory-table-desktop {
+    display: none;
+  }
+
+  .responsive-record-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table {
+    display: block;
+    width: 100%;
+    background: transparent;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table thead {
+    display: none;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table tbody tr {
+    display: block;
+    padding: 5px 12px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table tbody tr:nth-child(even),
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table tbody tr:hover {
+    background: #fff;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(95px, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: 10px;
+    padding: 8px 0;
+    color: var(--ink);
+    border: 0;
+    border-bottom: 1px solid #f0edf3;
+    text-align: left !important;
+    overflow-wrap: anywhere;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) > .regal-table tbody td::before {
+    color: var(--muted);
+    content: attr(data-label);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .table-responsive:has(.regal-table td[data-label]) .btn-group,
+  .table-responsive:has(.regal-table td[data-label]) td[data-label="Actions"] > button {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 860px) {
@@ -1974,16 +2049,6 @@ textarea:focus-visible {
     border-top: 1px solid rgba(255, 255, 255, 0.13);
   }
 
-  .product-table-desktop,
-  .inventory-table-desktop {
-    display: none;
-  }
-
-  .responsive-record-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -2024,10 +2089,76 @@ textarea:focus-visible {
     border-radius: 10px !important;
   }
 
+  .data-view-panel {
+    padding: 14px 12px !important;
+    border-radius: 10px !important;
+  }
+
   .product-view-panel > h4,
-  .inventory-view-panel > h2 {
+  .inventory-view-panel > h2,
+  .data-view-panel > h4 {
     margin: 0 0 14px;
     text-align: left !important;
+  }
+
+  .data-view-panel > .button-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .data-view-panel > .button-container > button,
+  .data-view-panel > .button-container > select {
+    min-height: 40px;
+  }
+
+  .data-view-panel > .button-container input {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .data-view-panel form.flex.items-end {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .data-view-panel form.flex.items-end > * {
+    min-width: 0;
+  }
+
+  .data-view-panel form.flex.items-end > button {
+    flex: 1 1 110px;
+  }
+
+  .sales-view-panel > .my-3 {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sales-view-panel > .my-3 > .flex {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .sales-view-panel > .my-3 > .flex:last-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .sales-view-panel > .my-3 > .flex:last-child > div {
+    padding: 9px;
+    background: #f7f5fa;
+    border-radius: 7px;
+  }
+
+  .data-view-panel .table-responsive:has(.regal-table td[data-label]) .regal-table tbody td {
+    grid-template-columns: minmax(86px, 0.75fr) minmax(0, 1.25fr);
+    gap: 8px;
+  }
+
+  .data-view-panel .table-responsive:has(.regal-table td[data-label]) .regal-table tbody td[data-label="Actions"] {
+    align-items: center;
   }
 
   .product-actions,

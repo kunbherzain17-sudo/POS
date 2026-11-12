@@ -49,7 +49,7 @@ export const VendorsView: React.FC = () => {
   });
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         View Vendor
       </h4>
@@ -209,17 +209,17 @@ export const VendorsView: React.FC = () => {
           <tbody>
             {filtered.map((v) => (
               <tr key={v.id}>
-                <td style={{ fontWeight: 'bold' }}>{v.id}</td>
-                <td style={{ fontWeight: 600 }}>{v.name}</td>
-                <td style={{ fontFamily: 'monospace' }}>{v.contact}</td>
-                <td>Karachi, Pakistan</td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                <td data-label="ID" style={{ fontWeight: 'bold' }}>{v.id}</td>
+                <td data-label="Name" style={{ fontWeight: 600 }}>{v.name}</td>
+                <td data-label="Phone" style={{ fontFamily: 'monospace' }}>{v.contact}</td>
+                <td data-label="Address">Karachi, Pakistan</td>
+                <td data-label="Total purchasing" style={{ textAlign: 'right', fontWeight: 'bold' }}>
                   {v.totalPurchasing.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold', color: v.balance > 0 ? 'red' : 'inherit' }}>
+                <td data-label="Payable balance" style={{ textAlign: 'right', fontWeight: 'bold', color: v.balance > 0 ? 'red' : 'inherit' }}>
                   {v.balance.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'center' }}>
+                <td data-label="Actions" style={{ textAlign: 'center' }}>
                   <button
                     type="button"
                     onClick={() => alert(`Supplier Ledger statement generated for ${v.name}.`)}

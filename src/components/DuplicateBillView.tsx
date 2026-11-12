@@ -16,7 +16,7 @@ export const DuplicateBillView: React.FC = () => {
   });
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         Duplicate Bill
       </h4>
@@ -52,19 +52,19 @@ export const DuplicateBillView: React.FC = () => {
           <tbody>
             {filteredOrders.map((ord) => (
               <tr key={ord.orderId}>
-                <td className="orderid font-bold text-slate-800">#{ord.orderId}</td>
-                <td className="font-semibold text-slate-900">{ord.customerName}</td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{ord.totalPrice.toFixed(2)}</td>
-                <td style={{ textAlign: 'right', color: '#28a745', fontWeight: 600 }}>
+                <td data-label="Order ID" className="orderid font-bold text-slate-800">#{ord.orderId}</td>
+                <td data-label="Customer" className="font-semibold text-slate-900">{ord.customerName}</td>
+                <td data-label="Total price" style={{ textAlign: 'right', fontWeight: 'bold' }}>{ord.totalPrice.toFixed(2)}</td>
+                <td data-label="Amount paid" style={{ textAlign: 'right', color: '#28a745', fontWeight: 600 }}>
                   {ord.amountPaid.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'right', color: ord.totalDiscount > 0 ? 'red' : 'inherit' }}>
+                <td data-label="Discount" style={{ textAlign: 'right', color: ord.totalDiscount > 0 ? 'red' : 'inherit' }}>
                   {ord.totalDiscount.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>
+                <td data-label="Date" style={{ textAlign: 'center', fontFamily: 'monospace' }}>
                   {ord.date} {ord.time}
                 </td>
-                <td style={{ textAlign: 'center' }}>
+                <td data-label="Actions" style={{ textAlign: 'center' }}>
                   <button
                     type="button"
                     onClick={() => setActivePrintOrder(ord)}

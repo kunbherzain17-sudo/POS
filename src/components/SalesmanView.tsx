@@ -38,7 +38,7 @@ export const SalesmanView: React.FC = () => {
   });
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         View Salesman
       </h4>
@@ -152,10 +152,10 @@ export const SalesmanView: React.FC = () => {
           <tbody>
             {filtered.map((s) => (
               <tr key={s.id}>
-                <td style={{ fontWeight: 600 }}>{s.name}</td>
-                <td style={{ fontFamily: 'monospace' }}>{s.phone}</td>
-                <td>{s.address}</td>
-                <td style={{ textAlign: 'center' }}>
+                <td data-label="Name" style={{ fontWeight: 600 }}>{s.name}</td>
+                <td data-label="Phone" style={{ fontFamily: 'monospace' }}>{s.phone}</td>
+                <td data-label="Address">{s.address}</td>
+                <td data-label="Actions" style={{ textAlign: 'center' }}>
                   <div className="btn-group flex justify-center gap-2">
                     <button
                       type="button"

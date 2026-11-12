@@ -27,7 +27,7 @@ export const BanksView: React.FC = () => {
   );
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         View Bank
       </h4>
@@ -84,11 +84,11 @@ export const BanksView: React.FC = () => {
           <tbody>
             {filtered.map((b) => (
               <tr key={b.id}>
-                <td style={{ fontWeight: 600 }}>{b.bankName}</td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold', color: b.balance < 0 ? '#dc3545' : '#28a745' }}>
+                <td data-label="Name" style={{ fontWeight: 600 }}>{b.bankName}</td>
+                <td data-label="Balance" style={{ textAlign: 'right', fontWeight: 'bold', color: b.balance < 0 ? '#dc3545' : '#28a745' }}>
                   {b.balance.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'center' }}>
+                <td data-label="Actions" style={{ textAlign: 'center' }}>
                   <div className="btn-group flex justify-center gap-2">
                     <button
                       type="button"

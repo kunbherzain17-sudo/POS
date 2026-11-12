@@ -26,7 +26,7 @@ export const ExpensesView: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         View Expense
       </h4>
@@ -140,14 +140,14 @@ export const ExpensesView: React.FC = () => {
           <tbody>
             {expenses.map((e) => (
               <tr key={e.id}>
-                <td style={{ fontWeight: 'bold' }}>{e.id}</td>
-                <td style={{ fontWeight: 600 }}>{e.expense}</td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#dc3545' }}>
+                <td data-label="ID" style={{ fontWeight: 'bold' }}>{e.id}</td>
+                <td data-label="Name" style={{ fontWeight: 600 }}>{e.expense}</td>
+                <td data-label="Amount" style={{ textAlign: 'right', fontWeight: 'bold', color: '#dc3545' }}>
                   {e.amount.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{e.date}</td>
-                <td>{e.type}</td>
-                <td style={{ textAlign: 'center' }}>
+                <td data-label="Date" style={{ textAlign: 'center', fontFamily: 'monospace' }}>{e.date}</td>
+                <td data-label="Type">{e.type}</td>
+                <td data-label="Actions" style={{ textAlign: 'center' }}>
                   <button
                     type="button"
                     onClick={() => alert('Voucher verified.')}

@@ -52,7 +52,7 @@ export const ItemwiseRefundView: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         Itemwise Refund
       </h4>
@@ -86,14 +86,14 @@ export const ItemwiseRefundView: React.FC = () => {
           <tbody>
             {filtered.map((row, idx) => (
               <tr key={idx}>
-                <td style={{ fontWeight: 'bold' }}>#{row.order.orderId}</td>
-                <td>{row.order.customerName}</td>
-                <td style={{ fontWeight: 600 }}>{row.item.name}</td>
-                <td style={{ textAlign: 'right' }}>{row.item.price.toFixed(2)}</td>
-                <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{row.item.quantity}</td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{row.item.total.toFixed(2)}</td>
-                <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{row.order.date}</td>
-                <td style={{ textAlign: 'center' }}>
+                <td data-label="Order ID" style={{ fontWeight: 'bold' }}>#{row.order.orderId}</td>
+                <td data-label="Customer">{row.order.customerName}</td>
+                <td data-label="Product" style={{ fontWeight: 600 }}>{row.item.name}</td>
+                <td data-label="Price" style={{ textAlign: 'right' }}>{row.item.price.toFixed(2)}</td>
+                <td data-label="Sold quantity" style={{ textAlign: 'center', fontWeight: 'bold' }}>{row.item.quantity}</td>
+                <td data-label="Total price" style={{ textAlign: 'right', fontWeight: 'bold' }}>{row.item.total.toFixed(2)}</td>
+                <td data-label="Date" style={{ textAlign: 'center', fontFamily: 'monospace' }}>{row.order.date}</td>
+                <td data-label="Actions" style={{ textAlign: 'center' }}>
                   {row.item.quantity > 0 ? (
                     <button
                       type="button"

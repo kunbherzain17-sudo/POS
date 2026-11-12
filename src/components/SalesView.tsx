@@ -33,7 +33,7 @@ export const SalesView: React.FC = () => {
   const totalExpenseAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel sales-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         Sales View
       </h4>
@@ -95,15 +95,15 @@ export const SalesView: React.FC = () => {
               <tbody>
                 {filteredItems.map((item, idx) => (
                   <tr key={idx}>
-                    <td style={{ fontWeight: 'bold' }}>#{item.orderId}</td>
-                    <td>{item.product}</td>
-                    <td style={{ textAlign: 'right' }}>{item.price.toFixed(2)}</td>
-                    <td style={{ textAlign: 'right', color: '#28a745', fontWeight: 600 }}>
+                    <td data-label="Order ID" style={{ fontWeight: 'bold' }}>#{item.orderId}</td>
+                    <td data-label="Product">{item.product}</td>
+                    <td data-label="Price" style={{ textAlign: 'right' }}>{item.price.toFixed(2)}</td>
+                    <td data-label="Amount paid" style={{ textAlign: 'right', color: '#28a745', fontWeight: 600 }}>
                       {item.amountPaid.toFixed(2)}
                     </td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{item.quantity}</td>
-                    <td style={{ textAlign: 'right' }}>{item.pDiscount.toFixed(2)}</td>
-                    <td style={{ textAlign: 'right' }}>{item.totalDiscount.toFixed(2)}</td>
+                    <td data-label="Quantity" style={{ textAlign: 'center', fontWeight: 'bold' }}>{item.quantity}</td>
+                    <td data-label="Product discount" style={{ textAlign: 'right' }}>{item.pDiscount.toFixed(2)}</td>
+                    <td data-label="Total discount" style={{ textAlign: 'right' }}>{item.totalDiscount.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -129,12 +129,12 @@ export const SalesView: React.FC = () => {
               <tbody>
                 {filteredExpenses.map((exp) => (
                   <tr key={exp.id}>
-                    <td style={{ fontWeight: 600 }}>{exp.type}</td>
-                    <td>{exp.expense}</td>
-                    <td style={{ textAlign: 'right', color: '#dc3545', fontWeight: 'bold' }}>
+                    <td data-label="Expense type" style={{ fontWeight: 600 }}>{exp.type}</td>
+                    <td data-label="Expense">{exp.expense}</td>
+                    <td data-label="Amount" style={{ textAlign: 'right', color: '#dc3545', fontWeight: 'bold' }}>
                       {exp.amount.toFixed(2)}
                     </td>
-                    <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{exp.date}</td>
+                    <td data-label="Date" style={{ textAlign: 'center', fontFamily: 'monospace' }}>{exp.date}</td>
                   </tr>
                 ))}
               </tbody>

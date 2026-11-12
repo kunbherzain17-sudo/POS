@@ -62,7 +62,7 @@ export const CustomersView: React.FC = () => {
   });
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         View Customer
       </h4>
@@ -235,17 +235,17 @@ export const CustomersView: React.FC = () => {
           <tbody>
             {filtered.map((c) => (
               <tr key={c.id}>
-                <td style={{ fontWeight: 'bold' }}>{c.id}</td>
-                <td style={{ fontWeight: 600 }}>{c.name}</td>
-                <td style={{ fontFamily: 'monospace' }}>{c.phone}</td>
-                <td>{c.address || '-'}</td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                <td data-label="ID" style={{ fontWeight: 'bold' }}>{c.id}</td>
+                <td data-label="Name" style={{ fontWeight: 600 }}>{c.name}</td>
+                <td data-label="Phone" style={{ fontFamily: 'monospace' }}>{c.phone}</td>
+                <td data-label="Address">{c.address || '-'}</td>
+                <td data-label="Total purchasing" style={{ textAlign: 'right', fontWeight: 'bold' }}>
                   {c.totalPurchasing.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'right', fontWeight: 'bold', color: c.balance > 0 ? 'red' : 'inherit' }}>
+                <td data-label="Balance" style={{ textAlign: 'right', fontWeight: 'bold', color: c.balance > 0 ? 'red' : 'inherit' }}>
                   {c.balance.toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'center' }}>
+                <td data-label="Actions" style={{ textAlign: 'center' }}>
                   <div className="btn-group flex justify-center gap-1">
                     {c.balance > 0 && (
                       <button

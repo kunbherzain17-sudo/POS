@@ -83,7 +83,7 @@ export const AdministrationView: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="data-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <header className="pb-3 border-b mb-4">
         <h4 className="font-bold text-lg text-slate-900 m-0">Store Settings</h4>
         <p className="text-xs text-slate-500 m-0">
