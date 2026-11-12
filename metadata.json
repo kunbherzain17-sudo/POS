@@ -1,7 +1,6 @@
 {
-  "name": "Regal POS - Retail Management & POS System",
-  "description": "Exact clone of Regal POS (demo.regalpos.pk) featuring full POS billing register, inventory, sales analytics, customers, vendors, and admin controls.",
+  "name": "Asaan POS - Point of Sale",
+  "description": "A point-of-sale and retail management system for sales, inventory, customers, and suppliers.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
-

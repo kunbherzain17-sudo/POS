@@ -37,7 +37,7 @@ export const BanksView: React.FC = () => {
           type="button"
           onClick={() => setShowAddForm(!showAddForm)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Add New
         </button>

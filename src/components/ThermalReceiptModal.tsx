@@ -16,7 +16,7 @@ export const ThermalReceiptModal: React.FC = () => {
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col my-8 animate-scaleIn">
         {/* Modal Header */}
-        <div className="bg-[#866EC7] text-white px-5 py-3.5 flex items-center justify-between">
+        <div className="bg-[#49386f] text-white px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Printer className="w-5 h-5 text-amber-300" />
             <div>
@@ -174,7 +174,7 @@ export const ThermalReceiptModal: React.FC = () => {
             <div className="bg-white p-6 shadow-md border border-slate-200 rounded text-xs space-y-4">
               <div className="flex justify-between items-start pb-4 border-b border-slate-300">
                 <div>
-                  <h2 className="text-xl font-extrabold text-[#866EC7]">{storeSettings.storeName}</h2>
+                  <h2 className="text-xl font-extrabold text-[#6750A4]">{storeSettings.storeName}</h2>
                   <p className="text-slate-500 text-[11px]">{storeSettings.tagline}</p>
                   <p className="text-slate-500 text-[11px]">{storeSettings.address} • {storeSettings.phone}</p>
                 </div>
@@ -197,7 +197,7 @@ export const ThermalReceiptModal: React.FC = () => {
               </div>
 
               <table className="w-full text-xs">
-                <thead className="bg-[#866EC7] text-white">
+                <thead className="bg-[#6750A4] text-white">
                   <tr>
                     <th className="p-2 text-left">Item Description</th>
                     <th className="p-2 text-center">Quantity</th>
@@ -229,7 +229,7 @@ export const ThermalReceiptModal: React.FC = () => {
                     <span>Discount:</span>
                     <span>-Rs. {activePrintOrder.totalDiscount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between border-t border-slate-300 pt-1 font-bold text-base text-[#866EC7]">
+                  <div className="flex justify-between border-t border-slate-300 pt-1 font-bold text-base text-[#6750A4]">
                     <span>Grand Total:</span>
                     <span>Rs. {activePrintOrder.totalPrice.toFixed(2)}</span>
                   </div>
@@ -250,7 +250,7 @@ export const ThermalReceiptModal: React.FC = () => {
 
           <button
             onClick={handlePrint}
-            className="px-6 py-2.5 bg-[#866EC7] hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2"
+            className="px-6 py-2.5 bg-[#6750A4] hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2"
           >
             <Printer className="w-4 h-4" />
             <span>Print Receipt Now</span>

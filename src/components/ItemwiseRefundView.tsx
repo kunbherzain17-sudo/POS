@@ -68,7 +68,7 @@ export const ItemwiseRefundView: React.FC = () => {
         />
       </div>
 
-      {/* Orders Item Table matching demo.regalpos.pk/Admin/refund */}
+      {/* Order items available for refund */}
       <div className="table-responsive overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs">
           <thead>

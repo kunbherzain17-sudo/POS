@@ -45,7 +45,7 @@ export const AdministrationView: React.FC = () => {
         return;
       }
       if (!restored) {
-        setRestoreError('This file is not a valid Regal POS backup.');
+        setRestoreError('This file is not a valid Asaan POS backup.');
         return;
       }
       setRestoreSuccess('Backup restored on this device.');
@@ -76,7 +76,7 @@ export const AdministrationView: React.FC = () => {
 
       <section className="max-w-2xl bg-slate-50 p-5 rounded-xl border border-slate-200 mb-4">
         <h5 className="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
-          <Store className="w-4 h-4 text-[#866ec7]" aria-hidden="true" />
+          <Store className="w-4 h-4 text-[#6750a4]" aria-hidden="true" />
           <span>Store Profile & Receipt</span>
         </h5>
 
@@ -170,7 +170,7 @@ export const AdministrationView: React.FC = () => {
       <section className="space-y-4 max-w-2xl text-xs">
         <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
           <h5 className="font-bold text-sm text-purple-900 mb-1 flex items-center gap-2">
-            <Database className="w-4 h-4 text-[#866ec7]" aria-hidden="true" />
+            <Database className="w-4 h-4 text-[#6750a4]" aria-hidden="true" />
             <span>On-device data & backup</span>
           </h5>
           <p className="text-slate-600 mb-3">
@@ -184,7 +184,7 @@ export const AdministrationView: React.FC = () => {
               type="button"
               onClick={exportDatabaseBackup}
               className="btn btn-primary text-xs font-bold flex items-center gap-1.5 px-4 py-2"
-              style={{ backgroundColor: '#866ec7', borderColor: '#866ec7' }}
+              style={{ backgroundColor: '#6750a4', borderColor: '#6750a4' }}
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Download JSON Backup</span>
@@ -203,7 +203,7 @@ export const AdministrationView: React.FC = () => {
               accept=".json,application/json"
               onChange={handleFileImport}
               className="hidden"
-              aria-label="Select a Regal POS JSON backup"
+              aria-label="Select an Asaan POS JSON backup"
             />
           </div>
           {restoreError && <p className="mt-2 text-rose-700" role="alert">{restoreError}</p>}

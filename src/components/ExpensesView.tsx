@@ -37,7 +37,7 @@ export const ExpensesView: React.FC = () => {
           id="addNewBtn"
           onClick={() => setShowAddForm(!showAddForm)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Add New
         </button>
@@ -46,7 +46,7 @@ export const ExpensesView: React.FC = () => {
           onClick={() => alert('Expense Types: foods, Electric, aSHFAQ sALARY, RENT, chai, Entertainment')}
           className="btn btn-primary"
           id="paye"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Expense Type
         </button>
@@ -124,7 +124,7 @@ export const ExpensesView: React.FC = () => {
         </div>
       )}
 
-      {/* Expense Table matching demo.regalpos.pk/Admin/Viewexpense */}
+      {/* Expense list */}
       <div className="table-responsive overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs">
           <thead>

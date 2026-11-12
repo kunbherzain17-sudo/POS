@@ -126,7 +126,7 @@ export const PurchaseReturnView: React.FC = () => {
             <button
               type="submit"
               className="btn btn-primary px-4 py-2 font-bold"
-              style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+              style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
             >
               Process Purchase Return
             </button>

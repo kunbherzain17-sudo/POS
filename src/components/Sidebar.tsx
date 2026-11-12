@@ -108,7 +108,7 @@ export const Sidebar: React.FC = () => {
           >
             <span className="sidebar-brand-mark"><Store size={20} aria-hidden="true" /></span>
             <span className="sidebar-brand-copy">
-              <strong>Regal</strong>
+              <strong>Asaan POS</strong>
               <span>Point of sale</span>
             </span>
           </a>

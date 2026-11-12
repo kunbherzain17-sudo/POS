@@ -54,14 +54,14 @@ export const VendorsView: React.FC = () => {
         View Vendor
       </h4>
 
-      {/* Button Container matching demo.regalpos.pk */}
+      {/* Supplier actions */}
       <div className="button-container my-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           id="addNewBtn"
           onClick={() => setShowAddForm(true)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Add New
         </button>
@@ -76,7 +76,7 @@ export const VendorsView: React.FC = () => {
             }
           }}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Payment
         </button>
@@ -85,7 +85,7 @@ export const VendorsView: React.FC = () => {
           id="stockreport"
           onClick={() => alert(`Vendors Directory: Total ${vendors.length} vendors on file.`)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Vendor Details
         </button>
@@ -94,7 +94,7 @@ export const VendorsView: React.FC = () => {
           id="toggleSearch"
           onClick={() => setShowSearch(!showSearch)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
         </button>

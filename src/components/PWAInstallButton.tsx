@@ -35,8 +35,8 @@ export const PWAInstallButton: React.FC = () => {
           else setShowGuide(true);
         }}
         className="app-install-button"
-        aria-label="Install Regal POS app"
-        title="Install Regal POS on this device"
+        aria-label="Install Asaan POS app"
+        title="Install Asaan POS on this device"
       >
         {isIOS || isAndroid
           ? <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
@@ -78,18 +78,18 @@ export const PWAInstallButton: React.FC = () => {
               <ol className="list-decimal pl-5 text-slate-600 leading-relaxed space-y-1">
                 <li>Open this page in Safari while online.</li>
                 <li>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</li>
-                <li>Open Regal POS from the Home Screen once to finish caching it.</li>
+                <li>Open Asaan POS from the Home Screen once to finish caching it.</li>
               </ol>
             ) : isAndroid ? (
               <ol className="list-decimal pl-5 text-slate-600 leading-relaxed space-y-1">
                 <li>Open this page in Chrome while online.</li>
                 <li>Tap the browser menu, then <strong>Install app</strong> or <strong>Add to Home Screen</strong>.</li>
-                <li>Open Regal POS once while online to finish caching it.</li>
+                <li>Open Asaan POS once while online to finish caching it.</li>
               </ol>
             ) : (
               <ol className="list-decimal pl-5 text-slate-600 leading-relaxed space-y-1">
                 <li>Open this page in Chrome or Edge over HTTPS while online.</li>
-                <li>Use the install icon in the address bar, or the browser menu’s <strong>Install Regal POS</strong> option.</li>
+                <li>Use the install icon in the address bar, or the browser menu’s <strong>Install Asaan POS</strong> option.</li>
                 <li>Launch the installed app once online to finish caching it.</li>
               </ol>
             )}
@@ -101,7 +101,7 @@ export const PWAInstallButton: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowGuide(false)}
-              className="w-full py-2 bg-[#866EC7] text-white rounded font-bold"
+              className="w-full py-2 bg-[#6750A4] text-white rounded font-bold"
             >
               Done
             </button>

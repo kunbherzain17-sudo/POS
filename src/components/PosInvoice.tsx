@@ -21,6 +21,7 @@ import {
   DollarSign,
   Smartphone,
   Layers,
+  Store,
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { Product, CartItem, Order, Customer } from '../types';
@@ -387,31 +388,27 @@ export const PosInvoice: React.FC = () => {
   const selectedCustomerObj = customers.find((c) => c.id === selectedCustomerId) || customers[0];
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none pb-12 md:pb-0">
-      {/* Top Banner & Header matching Regal POS theme */}
-      <header className="bg-[#866EC7] text-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+    <div className="pos-terminal min-h-screen bg-slate-100 flex flex-col font-sans select-none">
+      <header className="pos-header bg-[#6750A4] text-white shadow-md sticky top-0 z-40">
+        <div className="pos-header-main max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
           {/* Left: Brand and Return to Dashboard */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="pos-header-leading flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setCurrentView('dashboard')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition"
+              className="pos-dashboard-button flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition"
               title="Return to Backoffice Dashboard"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Dashboard</span>
             </button>
 
-            <div className="flex items-center gap-2">
-              <img
-                src="/assets/regalposlogo.png"
-                alt="Regal POS"
-                className="h-8 sm:h-9 object-contain drop-shadow"
-              />
-              <div className="hidden lg:block leading-tight border-l border-white/30 pl-2">
-                <span className="text-xs font-bold tracking-wide block">
-                  {storeSettings.storeName} TERMINAL
-                </span>
+            <div className="pos-brand-lockup flex items-center gap-2">
+              <span className="pos-brand-mark" aria-hidden="true">
+                <Store size={20} />
+              </span>
+              <span className="pos-brand-name">Asaan POS</span>
+              <div className="pos-store-label hidden lg:block leading-tight border-l border-white/30 pl-2">
+                <span className="text-xs font-bold tracking-wide block">{storeSettings.storeName}</span>
                 <span className="text-[10px] text-purple-200 block truncate max-w-xs">
                   {storeSettings.address}
                 </span>
@@ -420,8 +417,8 @@ export const PosInvoice: React.FC = () => {
           </div>
 
           {/* Center: Live Clock & Offline Status */}
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 bg-black/20 px-3 py-1 rounded-full text-xs font-medium border border-white/10">
+          <div className="pos-header-status flex items-center gap-2">
+            <div className="pos-clock hidden sm:flex items-center gap-1.5 bg-black/20 px-3 py-1 rounded-full text-xs font-medium border border-white/10">
               <Calendar className="w-3.5 h-3.5 text-amber-300" />
               <span>{clockStr}</span>
             </div>
@@ -429,7 +426,7 @@ export const PosInvoice: React.FC = () => {
           </div>
 
           {/* Right: Quick actions & Install Button */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="pos-header-actions flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => setCurrentView('salesview')}
@@ -456,7 +453,7 @@ export const PosInvoice: React.FC = () => {
         </div>
 
         {/* Mobile Tab Switcher (Visible on mobile/tablet) */}
-        <div className="flex md:hidden bg-purple-900/60 border-t border-purple-400/30">
+        <div className="pos-mobile-tabs flex md:hidden bg-purple-900/60 border-t border-purple-400/30">
           <button
             onClick={() => setMobileTab('cart')}
             className={`flex-1 py-2 text-xs font-bold text-center transition flex items-center justify-center gap-1.5 ${
@@ -485,13 +482,13 @@ export const PosInvoice: React.FC = () => {
       </header>
 
       {/* Main Cashier Workspace Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-3 flex flex-col md:flex-row gap-3 overflow-hidden">
+      <main className="pos-workspace flex-1 max-w-7xl w-full mx-auto p-2 sm:p-3 flex flex-col md:flex-row gap-3 overflow-hidden">
         {/* ========================================================= */}
         {/* LEFT COLUMN: ACTIVE CART & REGISTER (col-md-5 or col-md-6) */}
         {/* ========================================================= */}
         <div
-          className={`w-full md:w-5/12 lg:w-5/12 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${
-            mobileTab === 'cart' ? 'flex' : 'hidden md:flex'
+          className={`pos-pane pos-cart-panel w-full md:w-5/12 lg:w-5/12 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${
+            mobileTab === 'cart' ? 'is-mobile-active' : ''
           }`}
         >
           {/* Top Register Controls: Customer Selector & Omnibox */}
@@ -543,11 +540,11 @@ export const PosInvoice: React.FC = () => {
                 value={barcodeSearch}
                 onChange={(e) => setBarcodeSearch(e.target.value)}
                 placeholder="Scan barcode or type item name & press Enter..."
-                className="w-full pl-9 pr-14 py-2 bg-white border-2 border-[#866EC7] rounded-lg text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="w-full pl-9 pr-14 py-2 bg-white border-2 border-[#6750A4] rounded-lg text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
               <button
                 type="submit"
-                className="absolute right-1 top-1 bottom-1 px-3 bg-[#866EC7] hover:bg-purple-700 text-white rounded-md text-xs font-bold transition flex items-center justify-center"
+                className="absolute right-1 top-1 bottom-1 px-3 bg-[#6750A4] hover:bg-purple-700 text-white rounded-md text-xs font-bold transition flex items-center justify-center"
               >
                 Add
               </button>
@@ -555,7 +552,7 @@ export const PosInvoice: React.FC = () => {
           </div>
 
           {/* Cart Table Container */}
-          <div className="flex-1 overflow-y-auto min-h-[260px] max-h-[460px] border-b border-slate-200">
+          <div className="pos-cart-scroll flex-1 overflow-y-auto min-h-[260px] max-h-[460px] border-b border-slate-200">
             {cartItems.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400">
                 <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center text-purple-400 mb-3 border border-purple-100">
@@ -573,8 +570,8 @@ export const PosInvoice: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <table className="w-full text-xs text-left">
-                <thead className="bg-[#866EC7] text-white sticky top-0 z-10 text-[11px]">
+              <table className="pos-cart-table w-full text-xs text-left">
+                <thead className="bg-[#6750A4] text-white sticky top-0 z-10 text-[11px]">
                   <tr>
                     <th className="py-2 px-2.5">Item</th>
                     <th className="py-2 px-1 text-center w-24">Qty</th>
@@ -668,7 +665,7 @@ export const PosInvoice: React.FC = () => {
           </div>
 
           {/* Cart Bottom Summary & Checkout Block */}
-          <div className="p-3 bg-slate-50 space-y-2.5">
+          <div className="pos-cart-summary p-3 bg-slate-50 space-y-2.5">
             {/* Quick discount and tax inputs */}
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center justify-between bg-white px-2 py-1.5 rounded-lg border border-slate-200">
@@ -703,8 +700,8 @@ export const PosInvoice: React.FC = () => {
               </div>
             </div>
 
-            {/* Regal POS Grand Total Bar */}
-            <div className="bg-[#866EC7] text-white p-3 rounded-xl shadow-md flex items-center justify-between">
+            {/* Sale total and payment actions */}
+            <div className="pos-grand-total bg-[#6750A4] text-white p-3 rounded-xl shadow-md flex items-center justify-between">
               <div>
                 <div className="text-[11px] text-purple-200 uppercase tracking-wider font-semibold">
                   Items: <span className="text-white font-bold">{totalItemCount}</span> | Pcs:{' '}
@@ -771,8 +768,8 @@ export const PosInvoice: React.FC = () => {
         {/* RIGHT COLUMN: VISUAL PRODUCT CATALOG & INVENTORY PICKER   */}
         {/* ========================================================= */}
         <div
-          className={`w-full md:w-7/12 lg:w-7/12 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${
-            mobileTab === 'catalog' ? 'flex' : 'hidden md:flex'
+          className={`pos-pane pos-catalog-panel w-full md:w-7/12 lg:w-7/12 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${
+            mobileTab === 'catalog' ? 'is-mobile-active' : ''
           }`}
         >
           {/* Catalog Top Filter Bar */}
@@ -820,13 +817,13 @@ export const PosInvoice: React.FC = () => {
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            <div className="pos-category-filter flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
               <button
                 type="button"
                 onClick={() => setSelectedCategory('All')}
                 className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${
                   selectedCategory === 'All'
-                    ? 'bg-[#866EC7] text-white shadow-xs'
+                    ? 'bg-[#6750A4] text-white shadow-xs'
                     : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -841,7 +838,7 @@ export const PosInvoice: React.FC = () => {
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${
                       selectedCategory === cat
-                        ? 'bg-[#866EC7] text-white shadow-xs'
+                        ? 'bg-[#6750A4] text-white shadow-xs'
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -853,7 +850,7 @@ export const PosInvoice: React.FC = () => {
           </div>
 
           {/* Catalog Display Area */}
-          <div className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-210px)] bg-slate-50/50">
+          <div className="pos-catalog-scroll flex-1 p-3 overflow-y-auto max-h-[calc(100vh-210px)] bg-slate-50/50">
             {filteredProducts.length === 0 ? (
               <div className="py-16 text-center text-slate-400">
                 <Search className="w-10 h-10 mx-auto text-slate-300 mb-2" />
@@ -864,7 +861,7 @@ export const PosInvoice: React.FC = () => {
               </div>
             ) : catalogViewMode === 'grid' ? (
               /* Visual Product Grid with High-Contrast Stock Pills */
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              <div className="pos-product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                 {filteredProducts.map((prod) => {
                   const isLow = prod.stock > 0 && prod.stock <= prod.quantityLimit;
                   const isOut = prod.stock <= 0;
@@ -872,7 +869,7 @@ export const PosInvoice: React.FC = () => {
                     <div
                       key={prod.id}
                       onClick={() => handleAddToCart(prod)}
-                      className={`p-3 bg-white rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-md cursor-pointer transition flex flex-col justify-between active:scale-[0.98] select-none ${
+                      className={`pos-product-card p-3 bg-white rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-md cursor-pointer transition flex flex-col justify-between active:scale-[0.98] select-none ${
                         isOut ? 'opacity-60 bg-slate-50' : ''
                       }`}
                     >
@@ -905,14 +902,14 @@ export const PosInvoice: React.FC = () => {
                       <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
                         <div>
                           <span className="text-[10px] text-slate-400 block leading-none">Price</span>
-                          <span className="text-sm font-extrabold text-[#866EC7]">
+                          <span className="text-sm font-extrabold text-[#6750A4]">
                             Rs. {prod.price.toFixed(0)}
                           </span>
                         </div>
 
                         <button
                           type="button"
-                          className="w-7 h-7 rounded-lg bg-purple-50 hover:bg-[#866EC7] text-purple-700 hover:text-white flex items-center justify-center transition shadow-2xs"
+                          className="w-7 h-7 rounded-lg bg-purple-50 hover:bg-[#6750A4] text-purple-700 hover:text-white flex items-center justify-center transition shadow-2xs"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -922,10 +919,10 @@ export const PosInvoice: React.FC = () => {
                 })}
               </div>
             ) : (
-              /* Spreadsheet Style Stock Table (matching original Regal POS stock picker) */
-              <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
+              /* Compact table view for the product catalog */
+              <div className="pos-catalog-table bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-[#9370DB] text-white">
+                  <thead className="bg-[#6750A4] text-white">
                     <tr>
                       <th className="p-2">Product Name</th>
                       <th className="p-2">Category</th>
@@ -963,7 +960,7 @@ export const PosInvoice: React.FC = () => {
                           <button
                             type="button"
                             className="btn btn-sm btn-primary px-2 py-0.5 text-[11px]"
-                            style={{ backgroundColor: '#866ec7', borderColor: '#866ec7' }}
+                            style={{ backgroundColor: '#6750a4', borderColor: '#6750a4' }}
                           >
                             + Add
                           </button>
@@ -985,7 +982,7 @@ export const PosInvoice: React.FC = () => {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 backdrop-blur-2xs animate-fadeIn">
           <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             {/* Modal Title */}
-            <div className="bg-[#866EC7] text-white p-4 flex items-center justify-between">
+            <div className="bg-[#49386f] text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Banknote className="w-5 h-5 text-amber-300" />
                 <div>
@@ -1152,7 +1149,7 @@ export const PosInvoice: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleFinalizeCheckout('a4')}
-                className="px-4 py-2 bg-[#866EC7] hover:bg-purple-700 text-white font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2 bg-[#6750A4] hover:bg-purple-700 text-white font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Save & Print A4</span>
@@ -1251,7 +1248,7 @@ export const PosInvoice: React.FC = () => {
       {showAddCustomerModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-2xs">
           <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
-            <div className="bg-[#866EC7] text-white p-3.5 flex items-center justify-between">
+            <div className="bg-[#49386f] text-white p-3.5 flex items-center justify-between">
               <h4 className="font-bold text-sm">Add New Customer</h4>
               <button
                 type="button"
@@ -1307,7 +1304,7 @@ export const PosInvoice: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-[#866EC7] text-white rounded font-bold text-xs"
+                  className="px-4 py-1.5 bg-[#6750A4] text-white rounded font-bold text-xs"
                 >
                   Save Customer
                 </button>

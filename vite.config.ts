@@ -13,8 +13,8 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         manifest: {
           id: '/',
-          name: 'Regal POS - Retail Management & POS System',
-          short_name: 'RegalPOS',
+          name: 'Asaan POS - Point of Sale',
+          short_name: 'Asaan POS',
           description: 'Offline-capable point of sale with independent on-device data.',
           theme_color: '#49386f',
           background_color: '#49386f',

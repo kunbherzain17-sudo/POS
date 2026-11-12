@@ -37,10 +37,10 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <main className="login-page">
-      <section className="login-brand-panel" aria-label="About Regal POS">
-        <a className="login-brand-lockup" href="/" aria-label="Regal home">
+      <section className="login-brand-panel" aria-label="About Asaan POS">
+        <a className="login-brand-lockup" href="/" aria-label="Asaan POS home">
           <span className="login-brand-mark"><Store size={23} aria-hidden="true" /></span>
-          <span>Regal</span>
+          <span>Asaan POS</span>
         </a>
         <div className="login-brand-message">
           <p>Made for the shop floor</p>

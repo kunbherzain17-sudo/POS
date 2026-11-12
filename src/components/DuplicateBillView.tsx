@@ -35,7 +35,7 @@ export const DuplicateBillView: React.FC = () => {
         </span>
       </div>
 
-      {/* Duplicate Bill Table matching demo.regalpos.pk/Admin/Duplicatebill */}
+      {/* Invoice search results */}
       <div className="table-responsive overflow-x-auto">
         <table className="table table-striped table-hover mb-0 regal-table w-full text-xs">
           <thead className="table-light">

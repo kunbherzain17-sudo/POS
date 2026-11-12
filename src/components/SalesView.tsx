@@ -72,7 +72,7 @@ export const SalesView: React.FC = () => {
         </div>
       </div>
 
-      {/* Two columns layout matching demo.regalpos.pk/Admin/salesview */}
+      {/* Sales and expense breakdown */}
       <div className="row flex flex-col lg:flex-row gap-4 mt-3">
         {/* Sold Products Table */}
         <div className="col-sm-6 flex-1">

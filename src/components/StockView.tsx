@@ -63,7 +63,7 @@ export const StockView: React.FC = () => {
         Stock View
       </h2>
 
-      {/* Button Container matching demo.regalpos.pk */}
+      {/* Inventory actions */}
       <div className="button-container my-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -214,7 +214,7 @@ export const StockView: React.FC = () => {
         </div>
       )}
 
-      {/* Stock Table matching demo.regalpos.pk */}
+      {/* Inventory list */}
       <div className="table-responsive overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs">
           <thead>
@@ -280,7 +280,7 @@ export const StockView: React.FC = () => {
       {adjustingProduct && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-5 max-w-sm w-full shadow-2xl animate-scaleIn text-xs">
-            <h5 className="font-bold text-base mb-2" style={{ color: '#866ec7' }}>
+            <h5 className="font-bold text-base mb-2" style={{ color: '#6750a4' }}>
               Adjust Inventory Stock
             </h5>
             <p className="text-slate-600 mb-3">

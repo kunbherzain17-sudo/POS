@@ -88,7 +88,7 @@ export const ProductsView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'RegalPOS_Product_Report.csv';
+    a.download = 'AsaanPOS_Product_Report.csv';
     a.click();
   };
 
@@ -118,14 +118,14 @@ export const ProductsView: React.FC = () => {
         View Product
       </h4>
 
-      {/* Button Container matching demo.regalpos.pk */}
+      {/* Product actions */}
       <div className="button-container my-3 flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           id="addNewBtn"
           onClick={handleAddNew}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Add New
         </button>
@@ -143,7 +143,7 @@ export const ProductsView: React.FC = () => {
           onClick={() => setShowCatModal(true)}
           className="btn btn-primary"
           id="cat"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Category
         </button>
@@ -152,7 +152,7 @@ export const ProductsView: React.FC = () => {
           onClick={handleExportToExcel}
           className="btn btn-primary"
           id="exportbutton"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Export to Excel
         </button>
@@ -161,7 +161,7 @@ export const ProductsView: React.FC = () => {
           id="importButton"
           onClick={() => alert('Excel Import template: Please upload .xlsx format product catalog.')}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Import Excel
         </button>
@@ -375,7 +375,7 @@ export const ProductsView: React.FC = () => {
       {showCatModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-5 max-w-sm w-full shadow-2xl animate-scaleIn text-xs">
-            <h5 className="font-bold text-base mb-3" style={{ color: '#866ec7' }}>
+            <h5 className="font-bold text-base mb-3" style={{ color: '#6750a4' }}>
               Add Category
             </h5>
             <form onSubmit={handleAddCategory} className="space-y-3">

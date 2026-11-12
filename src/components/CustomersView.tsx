@@ -67,14 +67,14 @@ export const CustomersView: React.FC = () => {
         View Customer
       </h4>
 
-      {/* Button Container matching demo.regalpos.pk */}
+      {/* Customer actions */}
       <div className="button-container my-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           id="addNewBtn"
           onClick={() => setShowAddForm(true)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Add New
         </button>
@@ -91,7 +91,7 @@ export const CustomersView: React.FC = () => {
             }
           }}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Payment
         </button>
@@ -100,7 +100,7 @@ export const CustomersView: React.FC = () => {
           id="stockreport"
           onClick={() => alert(`Customer Directory: Total ${customers.length} registered customers.`)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           Customers Detail
         </button>
@@ -109,7 +109,7 @@ export const CustomersView: React.FC = () => {
           id="toggleSearch"
           onClick={() => setShowSearch(!showSearch)}
           className="btn btn-primary"
-          style={{ backgroundColor: '#866ec7', borderColor: '#866ec7', color: '#fff' }}
+          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
         >
           <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
         </button>
@@ -215,7 +215,7 @@ export const CustomersView: React.FC = () => {
         </div>
       )}
 
-      {/* Customer Table matching demo.regalpos.pk */}
+      {/* Customer list */}
       <div className="table-responsive overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs">
           <thead>
@@ -277,7 +277,7 @@ export const CustomersView: React.FC = () => {
       {payCustomer && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-5 max-w-sm w-full shadow-2xl animate-scaleIn text-xs">
-            <h5 className="font-bold text-base mb-2" style={{ color: '#866ec7' }}>
+            <h5 className="font-bold text-base mb-2" style={{ color: '#6750a4' }}>
               Customer Payment
             </h5>
             <p className="text-slate-600 mb-3">

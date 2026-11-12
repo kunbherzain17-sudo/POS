@@ -236,6 +236,11 @@ const isStoreSettings = (value: unknown): value is StoreSettings =>
   isString(value.currency) &&
   isString(value.footerNote);
 
+const normalizeStoreSettings = (settings: StoreSettings): StoreSettings =>
+  settings.storeName.trim().toLocaleLowerCase() === 'regal pos'
+    ? { ...settings, storeName: 'Asaan POS' }
+    : settings;
+
 const CREDENTIALS_KEY = 'regal_local_credentials';
 const SESSION_KEY = 'regal_local_session';
 const PASSWORD_ITERATIONS = 310_000;
@@ -370,7 +375,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Store Settings
   const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => {
     const saved = localStorage.getItem('regal_settings');
-    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    return saved ? normalizeStoreSettings(JSON.parse(saved)) : DEFAULT_SETTINGS;
   });
 
   // Print modal
@@ -635,7 +640,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Database Backup to JSON file (works 100% offline!)
   const exportDatabaseBackup = () => {
     const backupData = {
-      app: 'Regal POS',
+      app: 'Asaan POS',
       version: '4.2',
       exportDate: new Date().toISOString(),
       products,
@@ -654,7 +659,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `RegalPOS_Database_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `AsaanPOS_Database_Backup_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -667,7 +672,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
-    if (!isRecord(parsed) || parsed.app !== 'Regal POS') return false;
+    if (!isRecord(parsed) || (parsed.app !== 'Asaan POS' && parsed.app !== 'Regal POS')) return false;
     const data = parsed;
     if (
       !isArrayOf(data.products, isProduct) ||
@@ -703,7 +708,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveAndSet('regal_banks', banks, setBanks);
     saveAndSet('regal_salesmen', salesmen, setSalesmen);
     saveAndSet('regal_categories', data.categories, setCategories);
-    saveAndSet('regal_settings', data.storeSettings, setStoreSettings);
+    saveAndSet('regal_settings', normalizeStoreSettings(data.storeSettings), setStoreSettings);
     localStorage.setItem('regal_held_bills', JSON.stringify(heldBills));
     return true;
   };

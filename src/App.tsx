@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Menu, Store } from 'lucide-react';
 import { PosProvider, usePos } from './context/PosContext';
 import { LoginScreen } from './components/LoginScreen';
@@ -23,6 +23,10 @@ import { ThermalReceiptModal } from './components/ThermalReceiptModal';
 
 const AppContent: React.FC = () => {
   const { currentView, user, sidebarOpen, setSidebarOpen, setCurrentView } = usePos();
+
+  useEffect(() => {
+    document.title = 'Asaan POS - Point of Sale';
+  }, []);
 
   if (currentView === 'login' || !user) {
     return <LoginScreen />;
@@ -62,7 +66,7 @@ const AppContent: React.FC = () => {
             }}
           >
             <Store size={17} aria-hidden="true" />
-            <span>Store back office</span>
+            <span>Asaan POS</span>
           </a>
           <div className="topbar-actions">
             <OfflineIndicator />
