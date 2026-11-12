@@ -22,19 +22,89 @@ import { PWAInstallButton } from './components/PWAInstallButton';
 import { ThermalReceiptModal } from './components/ThermalReceiptModal';
 
 const AppContent: React.FC = () => {
-  const { currentView, user, sidebarOpen, setSidebarOpen, setCurrentView } = usePos();
+  const {
+    currentView,
+    user,
+    authLoading,
+    cloudConfigured,
+    cloudState,
+    cloudError,
+    clearCloudError,
+    subscriptionStatus,
+    demoMode,
+    exitDemo,
+    saveState,
+    saveError,
+    refreshCloudData,
+    retryCloudSave,
+    logout,
+    sidebarOpen,
+    setSidebarOpen,
+    setCurrentView,
+  } = usePos();
 
   useEffect(() => {
     document.title = 'Asaan POS - Point of Sale';
   }, []);
 
+  if (authLoading) {
+    return <main className="cloud-gate" role="status">Connecting to Asaan POS…</main>;
+  }
+
   if (currentView === 'login' || !user) {
     return <LoginScreen />;
+  }
+
+  if (!demoMode && (!cloudConfigured || cloudState === 'error')) {
+    return (
+      <main className="cloud-gate">
+        <Store size={32} aria-hidden="true" />
+        <h1>Unable to load your cloud store</h1>
+        <p>{cloudError || 'Cloud sign-in is not configured for this deployment.'}</p>
+        <div className="cloud-gate-actions">
+          <button type="button" onClick={() => void refreshCloudData().catch(() => undefined)}>
+            Try again
+          </button>
+          <button type="button" className="secondary" onClick={() => void logout()}>Sign out</button>
+        </div>
+      </main>
+    );
+  }
+
+  if (!demoMode && cloudState !== 'ready') {
+    return <main className="cloud-gate" role="status">Loading your store from the cloud…</main>;
+  }
+
+  if (!demoMode && subscriptionStatus !== 'active') {
+    return (
+      <main className="cloud-gate">
+        <Store size={32} aria-hidden="true" />
+        <h1>Your store is awaiting activation</h1>
+        <p>
+          Your account is created, but billing and payment verification are not connected yet.
+          Store access will be enabled after secure payment processing is configured.
+        </p>
+        <div className="cloud-gate-pricing">
+          <strong>PKR 40,000</strong> one-time setup <span aria-hidden="true">·</span>{' '}
+          <strong>PKR 3,000</strong> monthly
+        </div>
+        <p className="cloud-gate-note">
+          Do not send payment to an account based only on this screen. Contact the Asaan POS team for verified payment instructions.
+        </p>
+        <button type="button" onClick={() => void logout()}>Sign out</button>
+      </main>
+    );
   }
 
   if (currentView === 'invoice') {
     return (
       <div className="terminal-shell">
+        {demoMode && (
+          <div className="demo-banner" role="status">
+            <span>Interactive demo: changes are temporary for this visit. Don’t enter real business or customer data.</span>
+            <button type="button" onClick={exitDemo}>Exit demo</button>
+          </div>
+        )}
         <PosInvoice />
         <ThermalReceiptModal />
       </div>
@@ -79,6 +149,37 @@ const AppContent: React.FC = () => {
         </header>
 
         <main id="content" className="app-content">
+          {demoMode && (
+            <div className="demo-banner" role="status">
+              <span>Interactive demo: changes are temporary for this visit. Don’t enter real business or customer data.</span>
+              <button type="button" onClick={exitDemo}>Exit demo</button>
+            </div>
+          )}
+          {(saveState === 'saving' || saveState === 'error' || cloudError) && (
+            <div className={`cloud-sync-banner${saveState === 'error' || cloudError ? ' has-error' : ''}`} role="status">
+              <span>
+                {cloudError
+                  ? cloudError
+                  : saveState === 'saving'
+                    ? 'Saving changes to the cloud…'
+                    : saveError || 'Cloud save needs attention.'}
+              </span>
+              {saveState === 'error' && (
+                <button type="button" onClick={() => retryCloudSave()}>Retry save</button>
+              )}
+              {cloudError && (
+                <button type="button" onClick={clearCloudError} aria-label="Dismiss cloud message">Dismiss</button>
+              )}
+              {saveState === 'error' && (
+                <button
+                  type="button"
+                  onClick={() => void refreshCloudData().catch(() => undefined)}
+                >
+                  Reload cloud data
+                </button>
+              )}
+            </div>
+          )}
           {currentView === 'dashboard' && <Dashboard />}
           {currentView === 'products' && <ProductsView />}
           {currentView === 'customers' && <CustomersView />}

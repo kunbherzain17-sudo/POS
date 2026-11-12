@@ -95,8 +95,7 @@ export const PWAInstallButton: React.FC = () => {
             )}
 
             <p className="text-xs text-slate-500">
-              After the first online visit and cache setup, the installed app can run offline.
-              Local store data stays on this device and does not sync.
+              The app shell may open offline, but store records load from the cloud and sales require an internet connection.
             </p>
             <button
               type="button"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 
 export const SalesmanView: React.FC = () => {
@@ -57,15 +57,18 @@ export const SalesmanView: React.FC = () => {
           type="button"
           id="toggleSearch"
           onClick={() => setShowSearch(!showSearch)}
-          className="btn btn-primary"
-          style={{ backgroundColor: '#6750a4', borderColor: '#6750a4', color: '#fff' }}
+          className="search-toggle-btn"
+          aria-expanded={showSearch}
+          aria-controls="salesman-search-form"
+          title={showSearch ? 'Close salesperson search' : 'Search salespeople'}
         >
-          <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
+          {showSearch ? <X size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+          <span>Search</span>
         </button>
       </div>
 
       {showSearch && (
-        <form onSubmit={(e) => e.preventDefault()} className="mb-3 p-3 bg-slate-50 border rounded">
+        <form id="salesman-search-form" onSubmit={(e) => e.preventDefault()} className="mb-3 p-3 bg-slate-50 border rounded">
           <div className="row flex items-end gap-3">
             <div className="col-md-3">
               <label className="text-xs font-bold text-slate-700 block mb-1">Search:</label>

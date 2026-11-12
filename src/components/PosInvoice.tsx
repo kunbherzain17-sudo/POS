@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
+  ImagePlus,
   Search,
   Barcode,
   Plus,
@@ -23,19 +24,11 @@ import {
   Layers,
   Store,
 } from 'lucide-react';
-import { usePos } from '../context/PosContext';
+import { HeldBill, usePos } from '../context/PosContext';
 import { Product, CartItem, Order, Customer } from '../types';
 import { PWAInstallButton } from './PWAInstallButton';
 import { OfflineIndicator } from './OfflineIndicator';
-
-interface HeldBill {
-  id: string;
-  heldAt: string;
-  customerName: string;
-  customerId: number;
-  items: CartItem[];
-  note: string;
-}
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 export const PosInvoice: React.FC = () => {
   const {
@@ -52,7 +45,15 @@ export const PosInvoice: React.FC = () => {
     addCustomer,
     playScanBeep,
     storeSettings,
+    heldBills,
+    setHeldBills,
+    saveState,
+    saveError,
+    retryCloudSave,
+    saveHeldBillsNow,
+    refreshCloudData,
   } = usePos();
+  const isOnline = useOnlineStatus();
 
   // Active Cart State
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -70,11 +71,9 @@ export const PosInvoice: React.FC = () => {
   const [mobileTab, setMobileTab] = useState<'cart' | 'catalog'>('cart');
 
   // Held Bills queue (Hold / Recall)
-  const [heldBills, setHeldBills] = useState<HeldBill[]>(() => {
-    const saved = localStorage.getItem('regal_held_bills');
-    return saved ? JSON.parse(saved) : [];
-  });
   const [showHeldBillsModal, setShowHeldBillsModal] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -102,11 +101,6 @@ export const PosInvoice: React.FC = () => {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
-
-  // Save held bills to localStorage
-  useEffect(() => {
-    localStorage.setItem('regal_held_bills', JSON.stringify(heldBills));
-  }, [heldBills]);
 
   // Focus barcode input on mount and after actions
   useEffect(() => {
@@ -248,7 +242,7 @@ export const PosInvoice: React.FC = () => {
   };
 
   // Hold active bill
-  const handleHoldBill = () => {
+  const handleHoldBill = async () => {
     if (cartItems.length === 0) return;
     const currentCust = customers.find((c) => c.id === selectedCustomerId);
     const newHeld: HeldBill = {
@@ -263,13 +257,20 @@ export const PosInvoice: React.FC = () => {
       )} pcs)`,
     };
 
-    setHeldBills((prev) => [newHeld, ...prev]);
+    const nextHeldBills = [newHeld, ...heldBills];
+    try {
+      await saveHeldBillsNow(nextHeldBills);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'The held bill was not saved to the cloud.');
+      return;
+    }
+    setHeldBills(nextHeldBills);
     setCartItems([]);
     alert(`Order put on Hold (${newHeld.id}). You can recall it anytime!`);
   };
 
   // Recall held bill
-  const handleRecallBill = (bill: HeldBill) => {
+  const handleRecallBill = async (bill: HeldBill) => {
     if (cartItems.length > 0) {
       if (
         !confirm(
@@ -279,10 +280,27 @@ export const PosInvoice: React.FC = () => {
         return;
       }
     }
+    const nextHeldBills = heldBills.filter((heldBill) => heldBill.id !== bill.id);
+    try {
+      await saveHeldBillsNow(nextHeldBills);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'The held bill could not be recalled from the cloud.');
+      return;
+    }
     setCartItems(bill.items);
     setSelectedCustomerId(bill.customerId);
-    setHeldBills((prev) => prev.filter((b) => b.id !== bill.id));
+    setHeldBills(nextHeldBills);
     setShowHeldBillsModal(false);
+  };
+
+  const handleDeleteHeldBill = async (id: string) => {
+    const nextHeldBills = heldBills.filter((bill) => bill.id !== id);
+    try {
+      await saveHeldBillsNow(nextHeldBills);
+      setHeldBills(nextHeldBills);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'The held bill could not be removed from the cloud.');
+    }
   };
 
   // Create Quick Customer
@@ -320,57 +338,64 @@ export const PosInvoice: React.FC = () => {
   };
 
   // Checkout and Print
-  const handleFinalizeCheckout = (format: 'thermal' | 'a4' | 'none') => {
-    if (cartItems.length === 0) return;
+  const handleFinalizeCheckout = async (format: 'thermal' | 'a4' | 'none') => {
+    if (cartItems.length === 0 || isCheckingOut) return;
+    setCheckoutError('');
+    setIsCheckingOut(true);
 
-    const currentCustomer =
-      customers.find((c) => c.id === selectedCustomerId) || customers[0];
-    const amountPaidVal =
-      paidAmountInput === '' ? netPayable : parseFloat(paidAmountInput) || 0;
-    const changeDueVal = Math.max(0, amountPaidVal - netPayable);
-    const checkoutTime = new Date();
+    try {
+      const currentCustomer =
+        customers.find((c) => c.id === selectedCustomerId) || customers[0];
+      const amountPaidVal =
+        paidAmountInput === '' ? netPayable : parseFloat(paidAmountInput) || 0;
+      const changeDueVal = Math.max(0, amountPaidVal - netPayable);
+      const checkoutTime = new Date();
 
-    const orderData: Omit<Order, 'orderId'> = {
-      customerName: currentCustomer.name,
-      customerId: currentCustomer.id,
-      date: `${checkoutTime.getFullYear()}-${String(checkoutTime.getMonth() + 1).padStart(2, '0')}-${String(checkoutTime.getDate()).padStart(2, '0')}`,
-      time: checkoutTime.toTimeString().split(' ')[0].substring(0, 5),
-      items: cartItems.map((c) => ({
-        productId: c.productId,
-        name: c.name,
-        price: c.price,
-        cost: c.cost,
-        quantity: c.quantity,
-        pDiscount: (c.price * c.quantity * c.discountPercent) / 100,
-        total: c.total,
-      })),
-      subtotal: cartSubtotal,
-      totalDiscount: orderDiscount,
-      tax: calculatedTax,
-      totalPrice: netPayable,
-      amountPaid: amountPaidVal,
-      changeDue: changeDueVal,
-      paymentMethod: paymentMethod === 'Credit' ? 'Card' : paymentMethod,
-      cashier: user?.name || 'Admin',
-    };
+      const orderData: Omit<Order, 'orderId'> = {
+        customerName: currentCustomer.name,
+        customerId: currentCustomer.id,
+        date: `${checkoutTime.getFullYear()}-${String(checkoutTime.getMonth() + 1).padStart(2, '0')}-${String(checkoutTime.getDate()).padStart(2, '0')}`,
+        time: checkoutTime.toTimeString().split(' ')[0].substring(0, 5),
+        items: cartItems.map((c) => ({
+          productId: c.productId,
+          name: c.name,
+          price: c.price,
+          cost: c.cost,
+          quantity: c.quantity,
+          pDiscount: (c.price * c.quantity * c.discountPercent) / 100,
+          total: c.total,
+        })),
+        subtotal: cartSubtotal,
+        totalDiscount: orderDiscount,
+        tax: calculatedTax,
+        totalPrice: netPayable,
+        amountPaid: amountPaidVal,
+        changeDue: changeDueVal,
+        paymentMethod: paymentMethod === 'Credit' ? 'Card' : paymentMethod,
+        cashier: user?.name || 'Admin',
+      };
 
-    const newOrder = createOrder(orderData);
-    playScanBeep();
+      const newOrder = await createOrder(orderData);
+      playScanBeep();
 
-    if (format !== 'none') {
-      setPrintFormat(format);
-      setActivePrintOrder(newOrder);
-    }
+      if (format !== 'none') {
+        setPrintFormat(format);
+        setActivePrintOrder(newOrder);
+      }
 
-    // Reset Terminal for next sale
-    setCartItems([]);
-    setPaidAmountInput('');
-    setOrderDiscount(0);
-    setTaxPercent(0);
-    setShowPaymentModal(false);
+      setCartItems([]);
+      setPaidAmountInput('');
+      setOrderDiscount(0);
+      setTaxPercent(0);
+      setShowPaymentModal(false);
 
-    if (barcodeInputRef.current) {
-      barcodeInputRef.current.focus();
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.focus();
+      }
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'The sale was not confirmed by the cloud.');
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -389,6 +414,28 @@ export const PosInvoice: React.FC = () => {
 
   return (
     <div className="pos-terminal min-h-screen bg-slate-100 flex flex-col font-sans select-none">
+      {(!isOnline || saveState !== 'saved' || checkoutError) && (
+        <div className={`cloud-sync-banner${saveState === 'error' || !isOnline || checkoutError ? ' has-error' : ''}`} role="status">
+          <span>
+            {!isOnline
+              ? 'Offline: checkout is unavailable and cloud changes cannot be saved.'
+              : checkoutError || (saveState === 'saving' ? 'Saving changes to the cloud…' : saveError)}
+          </span>
+          {saveState === 'error' && (
+            <>
+              <button type="button" onClick={retryCloudSave}>Retry save</button>
+              <button
+                type="button"
+                onClick={() => void refreshCloudData().catch((error: unknown) => {
+                  setCheckoutError(error instanceof Error ? error.message : 'Unable to reload cloud data.');
+                })}
+              >
+                Reload cloud data
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <header className="pos-header bg-[#6750A4] text-white shadow-md sticky top-0 z-40">
         <div className="pos-header-main max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
           {/* Left: Brand and Return to Dashboard */}
@@ -750,12 +797,13 @@ export const PosInvoice: React.FC = () => {
                   if (cartItems.length === 0) {
                     alert('Please add items to cart first.');
                   } else {
+                    setCheckoutError('');
                     setShowPaymentModal(true);
                   }
                 }}
-                disabled={cartItems.length === 0}
+                disabled={cartItems.length === 0 || !isOnline || saveState !== 'saved'}
                 className="py-2.5 px-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-black transition flex items-center justify-center gap-1 shadow-md"
-                title="Proceed to checkout and tender payment (F2)"
+                title={!isOnline || saveState !== 'saved' ? 'Wait for cloud sync before checkout' : 'Proceed to checkout and tender payment (F2)'}
               >
                 <CreditCard className="w-3.5 h-3.5" />
                 <span>Pay (F2)</span>
@@ -874,6 +922,18 @@ export const PosInvoice: React.FC = () => {
                       }`}
                     >
                       <div>
+                        {prod.imageUrl ? (
+                          <img
+                            src={prod.imageUrl}
+                            alt=""
+                            className="pos-product-image"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="pos-product-image-placeholder" aria-hidden="true">
+                            <ImagePlus size={22} />
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-1 mb-1.5">
                           <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 truncate max-w-[90px]">
                             {prod.category}
@@ -1003,6 +1063,12 @@ export const PosInvoice: React.FC = () => {
 
             {/* Modal Body */}
             <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs">
+              {checkoutError && <p className="login-error" role="alert">{checkoutError}</p>}
+              {(!isOnline || saveState !== 'saved') && (
+                <p className="login-error" role="alert">
+                  Checkout is paused until you are online and all store changes are synchronized.
+                </p>
+              )}
               {/* Grand Total Display */}
               <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
                 <span className="text-xs font-bold text-purple-800 uppercase tracking-wider block">
@@ -1142,13 +1208,15 @@ export const PosInvoice: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleFinalizeCheckout('none')}
+                disabled={isCheckingOut || !isOnline || saveState !== 'saved'}
                 className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-lg text-xs transition"
               >
-                Save Only
+                {isCheckingOut ? 'Saving…' : 'Save Only'}
               </button>
               <button
                 type="button"
                 onClick={() => handleFinalizeCheckout('a4')}
+                disabled={isCheckingOut || !isOnline || saveState !== 'saved'}
                 className="px-4 py-2 bg-[#6750A4] hover:bg-purple-700 text-white font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
@@ -1157,6 +1225,7 @@ export const PosInvoice: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleFinalizeCheckout('thermal')}
+                disabled={isCheckingOut || !isOnline || saveState !== 'saved'}
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-xs transition flex items-center gap-1.5 shadow-md"
               >
                 <Printer className="w-4 h-4" />
@@ -1217,7 +1286,7 @@ export const PosInvoice: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setHeldBills((prev) => prev.filter((x) => x.id !== b.id))}
+                        onClick={() => void handleDeleteHeldBill(b.id)}
                         className="px-2 py-1.5 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded text-xs"
                         title="Discard"
                       >

@@ -15,7 +15,7 @@ export default defineConfig(() => {
           id: '/',
           name: 'Asaan POS - Point of Sale',
           short_name: 'Asaan POS',
-          description: 'Offline-capable point of sale with independent on-device data.',
+          description: 'Cloud-connected point of sale for independent stores.',
           theme_color: '#49386f',
           background_color: '#49386f',
           display: 'standalone',

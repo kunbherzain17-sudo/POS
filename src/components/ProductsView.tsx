@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ImagePlus, Search, X } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { Product } from '../types';
 
+const createUniqueBarcode = (products: Product[]) => {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const random = new Uint32Array(2);
+    crypto.getRandomValues(random);
+    const suffix = ((random[0] * 0x100000000 + random[1]) % 100_000_000_000)
+      .toString()
+      .padStart(11, '0');
+    const candidate = `2${suffix}`;
+    if (!products.some((product) => product.barcode.trim() === candidate)) return candidate;
+  }
+  throw new Error('Could not generate a unique barcode. Please try again.');
+};
+
 export const ProductsView: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct, categories, addCategory } = usePos();
+  const { products, addProduct, updateProduct, deleteProduct, categories, addCategory, uploadProductImage, demoMode } = usePos();
   const [showSearch, setShowSearch] = useState(false);
   const [searchString, setSearchString] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -17,11 +30,29 @@ export const ProductsView: React.FC = () => {
   const [proDis, setProDis] = useState('0');
   const [proBarcode, setProBarcode] = useState('');
   const [limitQuan, setLimitQuan] = useState('5');
-  const [categoryVal, setCategoryVal] = useState(categories[0] || 'Accessories');
+  const [categoryVal, setCategoryVal] = useState(categories[0] || '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [existingImageUrl, setExistingImageUrl] = useState('');
+  const [removeExistingImage, setRemoveExistingImage] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Quick category modal
   const [showCatModal, setShowCatModal] = useState(false);
   const [newCatInput, setNewCatInput] = useState('');
+  const [barcodeError, setBarcodeError] = useState('');
+  const [barcodeStatus, setBarcodeStatus] = useState('');
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview('');
+      return;
+    }
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [imageFile]);
 
   const handleAddNew = () => {
     setEditingId(null);
@@ -29,9 +60,21 @@ export const ProductsView: React.FC = () => {
     setProPrice('');
     setProCost('');
     setProDis('0');
-    setProBarcode(Math.floor(1000000 + Math.random() * 9000000).toString());
+    setProBarcode('');
+    setBarcodeError('');
+    setBarcodeStatus('');
+    try {
+      setProBarcode(createUniqueBarcode(products));
+      setBarcodeStatus('A unique code was generated. Save the product, then print its label from Inventory.');
+    } catch (error) {
+      setBarcodeError(error instanceof Error ? error.message : 'Could not generate a product barcode.');
+    }
     setLimitQuan('5');
-    setCategoryVal(categories[0] || 'Accessories');
+    setCategoryVal(categories[0] || '');
+    setImageFile(null);
+    setExistingImageUrl('');
+    setRemoveExistingImage(false);
+    setFormError('');
     setShowAddForm(true);
   };
 
@@ -44,41 +87,81 @@ export const ProductsView: React.FC = () => {
     setProBarcode(p.barcode);
     setLimitQuan(p.quantityLimit.toString());
     setCategoryVal(p.category);
+    setImageFile(null);
+    setExistingImageUrl(p.imageUrl || '');
+    setRemoveExistingImage(false);
+    setFormError('');
+    setBarcodeError('');
+    setBarcodeStatus('');
     setShowAddForm(true);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proName || !proPrice || !proCost) return;
 
-    if (editingId) {
-      const existing = products.find((p) => p.id === editingId);
-      if (existing) {
-        updateProduct({
-          ...existing,
+    setFormError('');
+    const normalizedBarcode = proBarcode.trim();
+    if (!normalizedBarcode) {
+      setBarcodeError('Enter a barcode or generate a new one.');
+      return;
+    }
+    if (normalizedBarcode.length > 32) {
+      setBarcodeError('Barcode values must be 32 characters or fewer.');
+      return;
+    }
+    const duplicate = products.find((product) =>
+      product.barcode.trim().toLocaleLowerCase() === normalizedBarcode.toLocaleLowerCase() &&
+      product.id !== editingId
+    );
+    if (duplicate) {
+      setBarcodeError(`This barcode is already assigned to "${duplicate.name}". Each product needs a unique barcode.`);
+      return;
+    }
+    setBarcodeError('');
+    setIsSaving(true);
+    try {
+      let imageUrl = removeExistingImage ? undefined : existingImageUrl || undefined;
+      if (imageFile) imageUrl = await uploadProductImage(imageFile);
+      if (categoryVal.trim() && !categories.some((category) => category.toLowerCase() === categoryVal.trim().toLowerCase())) {
+        addCategory(categoryVal.trim());
+      }
+
+      if (editingId) {
+        const existing = products.find((p) => p.id === editingId);
+        if (existing) {
+          updateProduct({
+            ...existing,
+            name: proName,
+            price: parseFloat(proPrice) || 0,
+            cost: parseFloat(proCost) || 0,
+            discount: parseFloat(proDis) || 0,
+            barcode: normalizedBarcode,
+            quantityLimit: parseInt(limitQuan) || 5,
+            category: categoryVal.trim(),
+            imageUrl,
+          });
+        }
+      } else {
+        addProduct({
           name: proName,
           price: parseFloat(proPrice) || 0,
           cost: parseFloat(proCost) || 0,
           discount: parseFloat(proDis) || 0,
-          barcode: proBarcode,
+          barcode: normalizedBarcode,
           quantityLimit: parseInt(limitQuan) || 5,
-          category: categoryVal,
+          category: categoryVal.trim(),
+          stock: 25,
+          imageUrl,
         });
       }
-    } else {
-      addProduct({
-        name: proName,
-        price: parseFloat(proPrice) || 0,
-        cost: parseFloat(proCost) || 0,
-        discount: parseFloat(proDis) || 0,
-        barcode: proBarcode,
-        quantityLimit: parseInt(limitQuan) || 5,
-        category: categoryVal,
-        stock: 25,
-      });
-    }
 
-    setShowAddForm(false);
+      setShowAddForm(false);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'The product could not be saved.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleExportToExcel = () => {
@@ -113,13 +196,13 @@ export const ProductsView: React.FC = () => {
   });
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="product-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h4 style={{ textAlign: 'center', paddingTop: '0px !important', paddingBottom: '0px !important', fontWeight: 'bold' }}>
         View Product
       </h4>
 
       {/* Product actions */}
-      <div className="button-container my-3 flex flex-wrap items-center gap-1.5">
+      <div className="button-container product-actions my-3 flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           id="addNewBtn"
@@ -133,10 +216,13 @@ export const ProductsView: React.FC = () => {
           type="button"
           id="toggleSearch"
           onClick={() => setShowSearch(!showSearch)}
-          className="btn"
-          style={{ backgroundColor: 'mediumpurple', color: '#fff' }}
+          className="search-toggle-btn"
+          aria-expanded={showSearch}
+          aria-controls="searchForm"
+          title={showSearch ? 'Close product search' : 'Search products'}
         >
-          <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
+          {showSearch ? <X size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+          <span>Search</span>
         </button>
         <button
           type="button"
@@ -169,7 +255,7 @@ export const ProductsView: React.FC = () => {
 
       {/* Search Form */}
       {showSearch && (
-        <form id="searchForm" onSubmit={(e) => e.preventDefault()} className="mb-3 p-3 bg-slate-50 border rounded">
+        <form id="searchForm" onSubmit={(e) => e.preventDefault()} className="product-search-panel mb-3 p-3 bg-slate-50 border rounded">
           <div className="row flex items-end gap-3">
             <div className="col-md-3 col-sm-6">
               <div className="form-group">
@@ -256,15 +342,43 @@ export const ProductsView: React.FC = () => {
                 />
               </div>
               <div className="form-group">
-                <label className="text-xs font-bold text-slate-700 block mb-1">Barcode:</label>
-                <input
-                  className="form-control-regal"
-                  id="pro_barcode"
-                  required
-                  type="text"
-                  value={proBarcode}
-                  onChange={(e) => setProBarcode(e.target.value)}
-                />
+                <label htmlFor="pro_barcode" className="text-xs font-bold text-slate-700 block mb-1">Barcode / product code:</label>
+                <div className="flex gap-1">
+                  <input
+                    className="form-control-regal"
+                    id="pro_barcode"
+                    required
+                    maxLength={32}
+                    type="text"
+                    value={proBarcode}
+                    onChange={(e) => {
+                      setProBarcode(e.target.value);
+                      setBarcodeError('');
+                      setBarcodeStatus('');
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        setProBarcode(createUniqueBarcode(products));
+                        setBarcodeError('');
+                        setBarcodeStatus('A unique code was generated. Save the product, then print its label from Inventory.');
+                      } catch (error) {
+                        setBarcodeStatus('');
+                        setBarcodeError(error instanceof Error ? error.message : 'Could not generate a product barcode.');
+                      }
+                    }}
+                    className="btn btn-secondary whitespace-nowrap"
+                  >
+                    Generate unique
+                  </button>
+                </div>
+                <p className="mt-1 text-[10px] text-slate-500">
+                  This field stores the code; it does not display a barcode image. Use the barcode already printed on an item, or generate a unique Asaan POS code.
+                </p>
+                {barcodeStatus && <p className="mt-1 text-[11px] text-emerald-700" role="status">{barcodeStatus}</p>}
+                {barcodeError && <p className="mt-1 text-[11px] text-rose-700" role="alert">{barcodeError}</p>}
               </div>
               <div className="form-group">
                 <label className="text-xs font-bold text-slate-700 block mb-1">Quantity Limit:</label>
@@ -278,24 +392,28 @@ export const ProductsView: React.FC = () => {
                 />
               </div>
               <div className="form-group">
-                <label className="text-xs font-bold text-slate-700 block mb-1">Category:</label>
+                <label htmlFor="cat_id_fk" className="text-xs font-bold text-slate-700 block mb-1">Category / type:</label>
                 <div className="flex gap-1">
-                  <select
+                  <input
                     className="form-control-regal"
                     id="cat_id_fk"
+                    list="product-category-options"
+                    placeholder="e.g. Apparel, Bakery, Pharmacy, Services"
                     value={categoryVal}
                     onChange={(e) => setCategoryVal(e.target.value)}
                     required
-                  >
+                  />
+                  <datalist id="product-category-options">
                     {categories.map((c) => (
                       <option key={c} value={c}>
                         {c}
                       </option>
                     ))}
-                  </select>
+                  </datalist>
                   <button
                     type="button"
                     onClick={() => setShowCatModal(true)}
+                    aria-label="Add category"
                     className="btn btn-success btn-sm px-2.5 font-bold"
                   >
                     +
@@ -304,21 +422,81 @@ export const ProductsView: React.FC = () => {
               </div>
             </div>
 
+            <div className="form-group mb-3">
+              <label htmlFor="product-image" className="text-xs font-bold text-slate-700 block mb-1">
+                Product photo <span className="font-normal text-slate-500">(optional)</span>
+              </label>
+              <div className="flex flex-wrap items-center gap-3">
+                {(imagePreview || (existingImageUrl && !removeExistingImage)) ? (
+                  <img
+                    src={imagePreview || existingImageUrl}
+                    alt={`${proName || 'Product'} preview`}
+                    className="product-image-preview"
+                  />
+                ) : (
+                  <div className="product-image-placeholder" aria-hidden="true">
+                    <ImagePlus size={22} />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <label htmlFor="product-image" className="btn btn-secondary cursor-pointer">
+                    <ImagePlus className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                    {imageFile || existingImageUrl ? 'Choose another photo' : 'Upload photo'}
+                  </label>
+                  {(imageFile || (existingImageUrl && !removeExistingImage)) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageFile(null);
+                        setExistingImageUrl('');
+                        setRemoveExistingImage(true);
+                      }}
+                      className="btn btn-secondary"
+                    >
+                      <X className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                      Remove photo
+                    </button>
+                  )}
+                  <input
+                    id="product-image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] || null;
+                      setImageFile(file);
+                      setRemoveExistingImage(false);
+                      setFormError('');
+                      event.target.value = '';
+                    }}
+                  />
+                  <span className="text-[11px] text-slate-500">JPG, PNG, or WebP · up to 5 MB</span>
+                </div>
+              </div>
+              {demoMode && imageFile && (
+                <p className="mt-1 text-[11px] text-amber-700">Demo photos are temporary and won’t be uploaded.</p>
+              )}
+            </div>
+
+            {formError && <p className="mb-3 text-xs text-rose-700" role="alert">{formError}</p>}
+
             <div className="form-group flex gap-2">
-              <button type="submit" className="btn btn-success">Save</button>
-              <button type="button" onClick={() => setShowAddForm(false)} className="btn btn-secondary">Cancel</button>
+              <button type="submit" disabled={isSaving} className="btn btn-success">
+                {isSaving ? 'Uploading & saving…' : 'Save'}
+              </button>
+              <button type="button" onClick={() => setShowAddForm(false)} disabled={isSaving} className="btn btn-secondary">Cancel</button>
             </div>
           </form>
         </div>
       )}
 
       {/* Product Table matching #productTable */}
-      <div className="table-responsive overflow-x-auto">
+      <div className="table-responsive product-table-desktop overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs" id="productTable">
           <thead>
             <tr>
               <th style={{ width: '40px' }}>ID</th>
-              <th>Name</th>
+              <th>Product</th>
               <th style={{ textAlign: 'right' }}>Price</th>
               <th style={{ textAlign: 'right' }}>Cost</th>
               <th style={{ textAlign: 'right' }}>Discount</th>
@@ -332,7 +510,18 @@ export const ProductsView: React.FC = () => {
             {filtered.map((p) => (
               <tr key={p.id}>
                 <td style={{ fontWeight: 'bold' }}>{p.id}</td>
-                <td style={{ fontWeight: 600 }}>{p.name}</td>
+                <td>
+                  <div className="flex items-center gap-2">
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt="" className="product-image-thumbnail" />
+                    ) : (
+                      <span className="product-image-thumbnail-placeholder" aria-hidden="true">
+                        <ImagePlus size={14} />
+                      </span>
+                    )}
+                    <span style={{ fontWeight: 600 }}>{p.name}</span>
+                  </div>
+                </td>
                 <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{p.price.toFixed(2)}</td>
                 <td style={{ textAlign: 'right' }}>{p.cost.toFixed(2)}</td>
                 <td style={{ textAlign: 'right', color: p.discount > 0 ? 'red' : 'inherit' }}>
@@ -370,14 +559,64 @@ export const ProductsView: React.FC = () => {
           </tbody>
         </table>
       </div>
+      <div className="responsive-record-grid product-card-grid">
+        {filtered.map((p) => (
+          <article className="responsive-record-card" key={p.id}>
+            <header className="responsive-record-heading">
+              {p.imageUrl ? (
+                <img src={p.imageUrl} alt="" className="product-image-thumbnail" />
+              ) : (
+                <span className="product-image-thumbnail-placeholder" aria-hidden="true">
+                  <ImagePlus size={14} />
+                </span>
+              )}
+              <div className="responsive-record-title">
+                <h3>{p.name}</h3>
+                <span>Product #{p.id}</span>
+              </div>
+            </header>
+            <dl className="responsive-record-details">
+              <div><dt>Retail price</dt><dd>Rs. {p.price.toFixed(2)}</dd></div>
+              <div><dt>Cost</dt><dd>Rs. {p.cost.toFixed(2)}</dd></div>
+              <div><dt>Discount</dt><dd>{p.discount.toFixed(2)}</dd></div>
+              <div><dt>Category</dt><dd>{p.category}</dd></div>
+              <div className="responsive-record-wide"><dt>Barcode</dt><dd>{p.barcode}</dd></div>
+              <div><dt>Quantity limit</dt><dd>{p.quantityLimit}</dd></div>
+            </dl>
+            <footer className="responsive-record-actions">
+              <button
+                type="button"
+                onClick={() => handleEdit(p)}
+                className="btn btn-link text-info p-0 text-xs font-semibold"
+                style={{ color: '#17a2b8', textDecoration: 'none' }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete ${p.name}?`)) {
+                    deleteProduct(p.id);
+                  }
+                }}
+                className="btn btn-link text-danger p-0 text-xs font-semibold"
+                style={{ color: '#dc3545', textDecoration: 'none' }}
+              >
+                Delete
+              </button>
+            </footer>
+          </article>
+        ))}
+      </div>
 
       {/* Category Modal */}
       {showCatModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-5 max-w-sm w-full shadow-2xl animate-scaleIn text-xs">
-            <h5 className="font-bold text-base mb-3" style={{ color: '#6750a4' }}>
-              Add Category
+            <h5 className="font-bold text-base mb-1" style={{ color: '#6750a4' }}>
+              Add a product category
             </h5>
+            <p className="mb-3 text-slate-500">Use any category that fits your business, such as Clothing, Bakery, Medicines, or Services.</p>
             <form onSubmit={handleAddCategory} className="space-y-3">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Category Name</label>
@@ -386,7 +625,7 @@ export const ProductsView: React.FC = () => {
                   required
                   value={newCatInput}
                   onChange={(e) => setNewCatInput(e.target.value)}
-                  placeholder="Enter Category Name"
+                  placeholder="Enter a category name"
                   className="form-control-regal"
                 />
               </div>

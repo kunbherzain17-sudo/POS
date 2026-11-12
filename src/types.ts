@@ -8,6 +8,7 @@ export interface Product {
   category: string;
   quantityLimit: number;
   stock: number;
+  imageUrl?: string;
 }
 
 export interface Customer {

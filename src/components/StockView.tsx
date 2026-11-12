@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
+import { Barcode, ChevronDown, Search, X } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { Product } from '../types';
+import { BarcodePrintModal } from './BarcodePrintModal';
 
 export const StockView: React.FC = () => {
   const { products, updateProduct } = usePos();
@@ -16,6 +17,31 @@ export const StockView: React.FC = () => {
   const [showAddStockForm, setShowAddStockForm] = useState(false);
   const [selectedProdId, setSelectedProdId] = useState(products[0]?.id || 1);
   const [incomingQty, setIncomingQty] = useState('');
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(() => new Set());
+  const [showBarcodePrint, setShowBarcodePrint] = useState(false);
+
+  const selectedProducts = products.filter((product) => selectedProductIds.has(product.id));
+
+  const toggleProductSelection = (productId: number) => {
+    setSelectedProductIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  };
+
+  const toggleFilteredSelection = () => {
+    const allFilteredSelected = filtered.length > 0 && filtered.every((product) => selectedProductIds.has(product.id));
+    setSelectedProductIds((previous) => {
+      const next = new Set(previous);
+      filtered.forEach((product) => {
+        if (allFilteredSelected) next.delete(product.id);
+        else next.add(product.id);
+      });
+      return next;
+    });
+  };
 
   const handleAdjustSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,13 +84,13 @@ export const StockView: React.FC = () => {
   });
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
+    <div className="inventory-view-panel" style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <h2 style={{ textAlign: 'center', fontWeight: 'bold', paddingTop: '0px !important', paddingBottom: '0px !important', fontSize: '1.6rem' }}>
         Stock View
       </h2>
 
       {/* Inventory actions */}
-      <div className="button-container my-3 flex flex-wrap items-center gap-2">
+      <div className="button-container inventory-actions my-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => setShowAddStockForm(true)}
@@ -77,21 +103,36 @@ export const StockView: React.FC = () => {
 
         <button
           type="button"
-          className="btn btn-primary action-btn"
+          className="search-toggle-btn"
           id="toggleSearch"
           onClick={() => setShowSearch(!showSearch)}
-          style={{ backgroundColor: 'mediumpurple', color: '#fff', borderColor: 'mediumpurple' }}
+          aria-expanded={showSearch}
+          aria-controls="stock-search-form"
+          title={showSearch ? 'Close inventory search' : 'Search inventory'}
         >
-          <Search className="mr-1 h-4 w-4" aria-hidden="true" /> Search
+          {showSearch ? <X size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+          <span>Search</span>
         </button>
 
         <button
           type="button"
-          onClick={() => alert('Barcode generator ready. Click Barcode icon in table row.')}
+          onClick={() => setShowBarcodePrint(true)}
+          disabled={selectedProducts.length === 0}
           className="btn btn-primary action-btn"
           style={{ backgroundColor: 'mediumpurple', color: '#fff', borderColor: 'mediumpurple' }}
         >
-          Print Barcode
+          <Barcode className="mr-1 inline h-4 w-4" aria-hidden="true" />
+          Print labels ({selectedProducts.length})
+        </button>
+        <button
+          type="button"
+          onClick={toggleFilteredSelection}
+          disabled={filtered.length === 0}
+          className="btn btn-secondary action-btn"
+        >
+          {filtered.length > 0 && filtered.every((product) => selectedProductIds.has(product.id))
+            ? 'Clear visible selection'
+            : `Select visible (${filtered.length})`}
         </button>
 
         <button
@@ -146,7 +187,7 @@ export const StockView: React.FC = () => {
       </div>
 
       {showSearch && (
-        <form onSubmit={(e) => e.preventDefault()} className="mb-3 p-3 bg-slate-50 border rounded">
+        <form id="stock-search-form" onSubmit={(e) => e.preventDefault()} className="mb-3 p-3 bg-slate-50 border rounded">
           <div className="row flex items-end gap-3">
             <div className="col-md-3">
               <label className="text-xs font-bold text-slate-700 block mb-1">Search Product / SKU</label>
@@ -215,12 +256,21 @@ export const StockView: React.FC = () => {
       )}
 
       {/* Inventory list */}
-      <div className="table-responsive overflow-x-auto">
+      <div className="table-responsive inventory-table-desktop overflow-x-auto">
         <table className="table table-striped regal-table w-full text-xs">
           <thead>
             <tr>
               <th style={{ width: '40px' }}>ID</th>
+              <th style={{ width: '42px', textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  checked={filtered.length > 0 && filtered.every((product) => selectedProductIds.has(product.id))}
+                  onChange={toggleFilteredSelection}
+                  aria-label="Select all visible products"
+                />
+              </th>
               <th>Product Name</th>
+              <th>Barcode</th>
               <th>Category</th>
               <th style={{ textAlign: 'right' }}>Cost</th>
               <th style={{ textAlign: 'right' }}>Retail</th>
@@ -239,7 +289,16 @@ export const StockView: React.FC = () => {
               return (
                 <tr key={p.id}>
                   <td style={{ fontWeight: 'bold' }}>{p.id}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedProductIds.has(p.id)}
+                      onChange={() => toggleProductSelection(p.id)}
+                      aria-label={`Select ${p.name} for barcode printing`}
+                    />
+                  </td>
                   <td style={{ fontWeight: 600 }}>{p.name}</td>
+                  <td style={{ fontFamily: 'monospace' }}>{p.barcode}</td>
                   <td>{p.category}</td>
                   <td style={{ textAlign: 'right' }}>{p.cost.toFixed(2)}</td>
                   <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{p.price.toFixed(2)}</td>
@@ -276,6 +335,54 @@ export const StockView: React.FC = () => {
           </tbody>
         </table>
       </div>
+      <div className="responsive-record-grid inventory-card-grid">
+        {filtered.map((p) => {
+          const isOut = p.stock <= 0;
+          const isLow = p.stock > 0 && p.stock <= p.quantityLimit;
+
+          return (
+            <article className="responsive-record-card" key={p.id}>
+              <header className="responsive-record-heading inventory-record-heading">
+                <input
+                  type="checkbox"
+                  checked={selectedProductIds.has(p.id)}
+                  onChange={() => toggleProductSelection(p.id)}
+                  aria-label={`Select ${p.name} for barcode printing`}
+                />
+                <div className="responsive-record-title">
+                  <h3>{p.name}</h3>
+                  <span>{p.category} · #{p.id}</span>
+                </div>
+              </header>
+              <dl className="responsive-record-details">
+                <div><dt>Retail</dt><dd>Rs. {p.price.toFixed(2)}</dd></div>
+                <div><dt>Cost</dt><dd>Rs. {p.cost.toFixed(2)}</dd></div>
+                <div>
+                  <dt>In stock</dt>
+                  <dd className={isOut ? 'stock-value-out' : isLow ? 'stock-value-low' : 'stock-value-ok'}>{p.stock}</dd>
+                </div>
+                <div><dt>Limit</dt><dd>{p.quantityLimit}</dd></div>
+                <div><dt>Total cost</dt><dd>Rs. {(p.cost * p.stock).toFixed(2)}</dd></div>
+                <div><dt>Stock value</dt><dd>Rs. {(p.price * p.stock).toFixed(2)}</dd></div>
+                <div className="responsive-record-wide"><dt>Barcode</dt><dd>{p.barcode}</dd></div>
+              </dl>
+              <footer className="responsive-record-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdjustingProduct(p);
+                    setAdjustQtyInput(p.stock.toString());
+                  }}
+                  className="btn btn-primary btn-sm px-2 py-0 text-xs font-semibold"
+                  style={{ backgroundColor: 'mediumpurple', borderColor: 'mediumpurple' }}
+                >
+                  Adjust stock
+                </button>
+              </footer>
+            </article>
+          );
+        })}
+      </div>
 
       {adjustingProduct && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -309,6 +416,12 @@ export const StockView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+      {showBarcodePrint && selectedProducts.length > 0 && (
+        <BarcodePrintModal
+          products={selectedProducts}
+          onClose={() => setShowBarcodePrint(false)}
+        />
       )}
     </div>
   );

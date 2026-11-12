@@ -162,7 +162,7 @@ export const ThermalReceiptModal: React.FC = () => {
                   ))}
                 </div>
                 <div className="text-[9px] tracking-widest text-slate-600">
-                  *REGAL-{activePrintOrder.orderId}*
+                  *ASAAN-{activePrintOrder.orderId}*
                 </div>
                 <div className="text-[9px] font-sans text-slate-500 pt-1">
                   {storeSettings.footerNote}

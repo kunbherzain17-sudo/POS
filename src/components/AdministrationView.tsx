@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle, Database, Download, Save, Store, Upload } from 'lucide-react';
+import { CheckCircle, Database, Download, Save, Store, Upload } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 
 export const AdministrationView: React.FC = () => {
@@ -8,21 +8,31 @@ export const AdministrationView: React.FC = () => {
     updateStoreSettings,
     exportDatabaseBackup,
     importDatabaseBackup,
-    resetToCleanData,
+    storeName,
+    legacyImportAvailable,
+    migrateLegacyLocalData,
   } = usePos();
   const [settingsForm, setSettingsForm] = useState(storeSettings);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
   const [restoreError, setRestoreError] = useState('');
   const [restoreSuccess, setRestoreSuccess] = useState('');
+  const [isMigratingLegacy, setIsMigratingLegacy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setSettingsForm(storeSettings), [storeSettings]);
 
-  const handleSaveSettings = (event: React.FormEvent) => {
+  const handleSaveSettings = async (event: React.FormEvent) => {
     event.preventDefault();
-    updateStoreSettings(settingsForm);
-    setSaveSuccessMsg(true);
-    window.setTimeout(() => setSaveSuccessMsg(false), 3000);
+    setSettingsError('');
+    setSaveSuccessMsg(false);
+    try {
+      await updateStoreSettings(settingsForm);
+      setSaveSuccessMsg(true);
+      window.setTimeout(() => setSaveSuccessMsg(false), 3000);
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : 'Store settings were not saved to the cloud.');
+    }
   };
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,14 +42,14 @@ export const AdministrationView: React.FC = () => {
     setRestoreSuccess('');
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       if (typeof reader.result !== 'string') {
         setRestoreError('The selected backup could not be read as text.');
         return;
       }
       let restored: boolean;
       try {
-        restored = importDatabaseBackup(reader.result);
+        restored = await importDatabaseBackup(reader.result);
       } catch (error) {
         setRestoreError(error instanceof Error ? `Restore failed: ${error.message}` : 'Restore failed.');
         return;
@@ -48,29 +58,36 @@ export const AdministrationView: React.FC = () => {
         setRestoreError('This file is not a valid Asaan POS backup.');
         return;
       }
-      setRestoreSuccess('Backup restored on this device.');
+      setRestoreSuccess('Backup imported and saved to your cloud store.');
     };
     reader.onerror = () => setRestoreError('The selected backup could not be read.');
     reader.readAsText(file);
     event.target.value = '';
   };
 
-  const handleReset = () => {
+  const handleLegacyMigration = async () => {
     if (!window.confirm(
-      'This permanently deletes this device’s saved products, customers, suppliers, expenses, sales, held bills, categories, and store settings. Your administrator sign-in will be kept. Continue?'
-    )) {
-      return;
+      'Import the previous device’s business records into this empty cloud store? The old browser data will be kept unchanged.'
+    )) return;
+    setRestoreError('');
+    setRestoreSuccess('');
+    setIsMigratingLegacy(true);
+    try {
+      await migrateLegacyLocalData();
+      setRestoreSuccess('Previous device data was imported and saved to the cloud.');
+    } catch (error) {
+      setRestoreError(error instanceof Error ? error.message : 'Previous device data was not imported.');
+    } finally {
+      setIsMigratingLegacy(false);
     }
-    resetToCleanData();
-    window.location.reload();
   };
 
   return (
     <div style={{ backgroundColor: '#fff', padding: '15px 20px', borderRadius: '4px' }}>
       <header className="pb-3 border-b mb-4">
-        <h4 className="font-bold text-lg text-slate-900 m-0">Store & Device Settings</h4>
+        <h4 className="font-bold text-lg text-slate-900 m-0">Store Settings</h4>
         <p className="text-xs text-slate-500 m-0">
-          Configure your receipt, back up this device, or reset its saved store data.
+          Configure your store profile and manage cloud backups.
         </p>
       </header>
 
@@ -86,6 +103,7 @@ export const AdministrationView: React.FC = () => {
             <span>Store profile and receipt settings saved.</span>
           </div>
         )}
+        {settingsError && <p className="mb-3 text-xs text-rose-700" role="alert">{settingsError}</p>}
 
         <form onSubmit={handleSaveSettings} className="space-y-3 text-xs">
           <div>
@@ -171,12 +189,12 @@ export const AdministrationView: React.FC = () => {
         <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
           <h5 className="font-bold text-sm text-purple-900 mb-1 flex items-center gap-2">
             <Database className="w-4 h-4 text-[#6750a4]" aria-hidden="true" />
-            <span>On-device data & backup</span>
+            <span>Cloud store & backup</span>
           </h5>
           <p className="text-slate-600 mb-3">
-            This installation stores its records in this browser on this device. Separate devices do not sync.
-            Export a JSON backup and transfer it yourself to move data between devices. The backup does not
-            contain your administrator password.
+            {storeName || storeSettings.storeName} is synchronized through your account. Export a backup regularly
+            for an extra recovery copy, or import an existing Asaan POS backup to replace this store’s records.
+            Imports are validated and saved to the cloud before they are reported as complete.
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -197,6 +215,17 @@ export const AdministrationView: React.FC = () => {
               <Upload className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Restore from JSON</span>
             </button>
+            {legacyImportAvailable && (
+              <button
+                type="button"
+                onClick={() => void handleLegacyMigration()}
+                disabled={isMigratingLegacy}
+                className="btn btn-outline-secondary text-xs font-bold flex items-center gap-1.5 px-4 py-2 bg-white"
+              >
+                <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{isMigratingLegacy ? 'Importing…' : 'Import previous device data'}</span>
+              </button>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -211,31 +240,11 @@ export const AdministrationView: React.FC = () => {
         </div>
 
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-          <h5 className="font-bold text-sm text-amber-900 mb-1">Local sign-in limitations</h5>
+          <h5 className="font-bold text-sm text-amber-900 mb-1">Account security</h5>
           <p className="text-slate-600">
-            Each device has one administrator sign-in. It is a basic app lock, not encryption; protect the
-            device with its operating-system account and disk encryption.
+            Each account currently owns one store. Use a unique password and keep access to your email account
+            secure. Staff invitations and role management are not available yet.
           </p>
-        </div>
-
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl">
-          <div className="flex items-start gap-2.5">
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <h5 className="font-bold text-sm text-rose-900 mb-1">Clear this device’s store data</h5>
-              <p className="text-slate-600 mb-3">
-                Permanently remove local business records and restore clean starting data. This does not
-                delete the administrator sign-in or affect data on other devices.
-              </p>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-xs transition"
-              >
-                Reset local store data
-              </button>
-            </div>
-          </div>
         </div>
       </section>
     </div>
